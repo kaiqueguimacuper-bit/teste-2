@@ -14,6 +14,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.WindowInsetsController
+import android.webkit.CookieManager
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
@@ -60,6 +61,8 @@ class MainActivity : Activity() {
         setContentView(root)
         applyInsets()
 
+        CookieManager.getInstance().setAcceptCookie(true)
+        CookieManager.getInstance().setAcceptThirdPartyCookies(web, true)
         with(web.settings) {
             javaScriptEnabled = true
             domStorageEnabled = true
@@ -82,6 +85,7 @@ class MainActivity : Activity() {
                 val host = url.host ?: ""
                 if (host == remoteHost && url.path?.endsWith(".apk") != true) return false
                 if (host == "appassets.androidplatform.net") return false
+                if (Platforms.isFree(host)) { WatchActivity.open(this@MainActivity, url); return true }
                 openOutside(url)
                 return true
             }
@@ -160,7 +164,7 @@ class MainActivity : Activity() {
         root.setOnApplyWindowInsetsListener { v, insets ->
             if (fullView == null) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                    val b = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout())
+                    val b = insets.getInsets(WindowInsets.Type.systemBars() or WindowInsets.Type.displayCutout() or WindowInsets.Type.ime())
                     v.setPadding(b.left, b.top, b.right, b.bottom)
                 } else {
                     @Suppress("DEPRECATION")

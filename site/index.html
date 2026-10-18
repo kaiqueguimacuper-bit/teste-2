@@ -374,6 +374,46 @@ main { min-height: 70vh; }
 .ph img { width: 100%; aspect-ratio: 2 / 3; object-fit: cover; border-radius: var(--r-m); background: var(--bg-3); }
 .ph.wide img { aspect-ratio: auto; height: calc(clamp(130px, 14vw, 170px) * 1.5); }
 .ph figcaption { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- episódios grátis oficiais ---------- */
+.pill.free { background: #ffb23e; color: #1b1300; }
+.freetag { font-style: normal; color: var(--new); font-weight: 700; }
+.boxp { margin: 0; color: var(--muted); font-size: 13.5px; }
+.ep .acts { flex-wrap: wrap; justify-content: flex-end; }
+.ep .epplay { padding: 6px 11px; }
+.ep .epplay svg { width: 14px; height: 14px; }
+.ep .thumb[data-yt] { cursor: pointer; }
+.ep .thumb .playov { position: absolute; z-index: 4; width: 38px; height: 38px; border-radius: 50%; background: rgba(0,0,0,.55); display: grid; place-items: center; color: #fff; }
+.ep .thumb .playov svg { width: 18px; height: 18px; }
+@media (max-width: 560px) { .ep { grid-template-columns: 112px 1fr; } .ep .acts { grid-column: 1 / -1; justify-content: flex-start; } }
+.ytp { position: fixed; inset: 0; z-index: 110; background: #05050c; color: #fff; display: grid; grid-template-rows: auto 1fr auto; }
+.ytp[hidden] { display: none; }
+.ytbar { display: flex; align-items: center; gap: 12px; padding: max(12px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px)); }
+.ytbar .ttl { flex: 1; min-width: 0; }
+.ytbar .ttl b { display: block; font-family: var(--display); font-weight: 400; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ytbar .ttl span { font-size: 12.5px; opacity: .75; }
+.ytbar .pbtn { width: 44px; height: 44px; border-radius: 50%; border: 0; background: rgba(255,255,255,.12); color: #fff; display: grid; place-items: center; flex: none; }
+.ytbar .pbtn svg { width: 20px; height: 20px; }
+.ytaud { display: flex; gap: 6px; }
+.ytaud button, .yteps button { border: 1px solid rgba(255,255,255,.25); background: none; color: #fff; border-radius: 999px; padding: 6px 12px; font-size: 13px; }
+.ytaud button[aria-pressed="true"], .yteps button[aria-pressed="true"] { background: #fff; color: #111; }
+.ytstage { display: grid; place-items: center; min-height: 0; padding: 0 max(0px, env(safe-area-inset-right, 0px)) 0 max(0px, env(safe-area-inset-left, 0px)); }
+.ytbox { position: relative; width: min(100%, calc((100vh - 170px) * 16 / 9)); aspect-ratio: 16 / 9; max-width: 100%; background: #000; }
+.ytbox iframe, .ytbox #ytframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.ytmsg { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 14px; padding: 24px; text-align: center; background: #0b0b18; }
+.ytmsg p { margin: 0; max-width: 46ch; opacity: .85; }
+.yteps { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 12px max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.yteps span { font-size: 12.5px; opacity: .7; margin-right: 4px; }
+@media (max-width: 560px) { .ytbar { flex-wrap: wrap; } .ytaud { order: 5; width: 100%; } .ytbox { width: 100%; } }
+
+.srcs { display: grid; gap: 8px; }
+.srcrow { display: grid; gap: 2px; padding: 11px 14px; border-radius: 12px; background: var(--bg-3); text-decoration: none; }
+.srcrow b { font-weight: 700; font-size: 14px; }
+.srcrow span { color: var(--muted); font-size: 12.5px; }
+.srcrow:first-child:not(.far) { background: var(--accent); color: var(--accent-ink); }
+.srcrow:first-child:not(.far) span { color: inherit; opacity: .85; }
+.srcrow.far { opacity: .7; }
+.ep .thumb[data-yt] .no { display: none; }
 </style>
 
 <header class="top">
@@ -454,6 +494,17 @@ main { min-height: 70vh; }
   </div>
 </div>
 
+<div class="ytp" id="ytp" hidden role="dialog" aria-label="Player de episódios grátis">
+  <div class="ytbar">
+    <button class="pbtn" id="ytclose" aria-label="Fechar player"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18 9 12l6-6"/></svg></button>
+    <div class="ttl"><b id="ytttl"></b><span id="ytsub"></span></div>
+    <div class="ytaud" id="ytaud" role="group" aria-label="Áudio"></div>
+    <button class="pbtn" id="ytfs" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </div>
+  <div class="ytstage"><div class="ytbox"><div id="ytframe"></div><div class="ytmsg" id="ytmsg" hidden></div></div></div>
+  <div class="yteps" id="yteps"></div>
+</div>
+
 <div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheett"><div class="panel" id="sheetp"></div></div>
 <div class="toastbar" id="toast" hidden role="status"></div>
 
@@ -465,7 +516,7 @@ const $$ = (s, el = document) => [...el.querySelectorAll(s)];
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const FRAMED = !!(window.claude && typeof window.claude.use === "function");
 const NOIMG = FRAMED || !!window.__SAKUGA_NOIMG;
-const API = Object.assign({ anilist: "https://graphql.anilist.co", kitsu: ["https://kitsu.io/api/edge", "https://kitsu.app/api/edge"] }, window.__SAKUGA_API || {});
+const API = Object.assign({ anilist: "https://graphql.anilist.co", kitsu: ["https://kitsu.app/api/edge", "https://kitsu.io/api/edge"] }, window.__SAKUGA_API || {});
 const IS_APP = /SakugaApp/i.test(navigator.userAgent);
 const MEDIA_ON = !FRAMED && (!window.__SAKUGA_NOIMG || !!window.__SAKUGA_API);
 const DAY = 864e5, WEEK = 7 * DAY;
@@ -482,7 +533,14 @@ const PROV = {
   max: { n: "Max", u: (q) => "https://play.max.com/search?q=" + q, leg: true },
   hidive: { n: "HIDIVE", u: (q) => "https://www.hidive.com/search?q=" + q, leg: false },
 };
-const KIND = { ep: "Novo episódio", dub: "Dublagem", estreia: "Estreia", temporada: "Nova temporada", filme: "Filme", lancamento: "Lançamento", leg: "Legenda", pausa: "Pausa", anuncio: "Anúncio" };
+const FREE = {
+  yt: { n: "YouTube (canal oficial)", inapp: true }, pluto: { n: "Pluto TV" }, bilibili: { n: "Bilibili" }, iqiyi: { n: "iQIYI" },
+  tubi: { n: "Tubi" }, plex: { n: "Plex" }, abema: { n: "ABEMA" }, tver: { n: "TVer" }, nico: { n: "Niconico" },
+  wetv: { n: "WeTV" }, youku: { n: "Youku" }, laftel: { n: "Laftel" }, roku: { n: "The Roku Channel" }, retrocrush: { n: "RetroCrush" }, other: { n: "Site oficial" },
+};
+const REG = { BR: "Brasil", GLOBAL: "Mundo todo", LATAM: "América Latina", JP: "Só no Japão", CN: "Só na China", KR: "Só na Coreia", US: "Só nos EUA", ASIA: "Só na Ásia" };
+const regOk = (r) => !r || r === "BR" || r === "GLOBAL" || r === "LATAM";
+const KIND = { gratis: "Grátis no Sakuga", ep: "Novo episódio", dub: "Dublagem", estreia: "Estreia", temporada: "Nova temporada", filme: "Filme", lancamento: "Lançamento", leg: "Legenda", pausa: "Pausa", anuncio: "Anúncio" };
 const fmtD = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" });
 const fmtDW = new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "2-digit", month: "short" });
 const fmtT = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" });
@@ -491,7 +549,13 @@ const fmtWDL = new Intl.DateTimeFormat("pt-BR", { weekday: "long" });
 const norm = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
 /* ---------------- estado ---------------- */
-let ITEMS = [], BY = new Map(), FEED = [], STATUS = null, SOURCE = "arquivo";
+let ITEMS = [], BY = new Map(), FEED = [], STATUS = null, SOURCE = "arquivo", FILE_GEN = "";
+let DB_OK = false, DB_FEED = null, DB_STATUS = null;
+function dbApply() {
+  const fresh = (ts) => DB_OK || !FILE_GEN || (ts || "") >= FILE_GEN;
+  if (DB_FEED && fresh(DB_FEED.upd)) { applyFeed(DB_FEED); DB_FEED = null; }
+  if (DB_STATUS && fresh(DB_STATUS.lastRun)) { applyStatus(DB_STATUS); DB_STATUS = null; }
+}
 const store = {
   get(k, d) { try { const v = localStorage.getItem("sakuga:" + k); return v ? JSON.parse(v) : d; } catch { return d; } },
   set(k, v) { try { localStorage.setItem("sakuga:" + k, JSON.stringify(v)); } catch { /* sem armazenamento */ } },
@@ -538,8 +602,17 @@ const Media = (() => {
     if (!it || !MEDIA_ON) return null;
     if (mem.has(it.id)) return mem.get(it.id);
     const c = store.get(key(it.id), null);
-    if (c && now() - c.at < TTL) { mem.set(it.id, c.d); return c.d; }
-    return null;
+    const d = c && now() - c.at < TTL ? c.d : null;
+    mem.set(it.id, d);
+    return d;
+  }
+  function remember(id, d) {
+    mem.set(id, d);
+    const idx = store.get("media:idx", []).filter((x) => x !== id);
+    idx.push(id);
+    while (idx.length > 150) { const old = idx.shift(); try { localStorage.removeItem("sakuga:" + key(old)); } catch {} }
+    store.set("media:idx", idx);
+    store.set(key(id), { at: now(), d });
   }
   async function anilist(id) {
     const r = await fetch(API.anilist, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ query: Q, variables: { id: Number(id) } }) });
@@ -590,8 +663,7 @@ const Media = (() => {
       }
     }));
     await Promise.all(jobs);
-    mem.set(it.id, d);
-    store.set(key(it.id), { at: now(), d });
+    remember(it.id, d);
     return d;
   }
   function get(it, from, to) {
@@ -621,9 +693,9 @@ async function boot() {
     const r = await fetch("catalog.json", { cache: "no-cache" });
     if (r.ok) {
       const j = await r.json();
+      FILE_GEN = (j.status && j.status.lastRun) || "";
       if (!ITEMS.length || SOURCE === "arquivo") applyItems(j.items, "arquivo");
-      if (!FEED.length) applyFeed({ items: j.feed });
-      if (!STATUS) applyStatus(j.status);
+      if (SOURCE === "arquivo") { applyFeed({ items: j.feed }); applyStatus(j.status); }
     }
   } catch { /* sem arquivo: o banco preenche */ }
   if (!ITEMS.length) rerender();
@@ -642,14 +714,16 @@ async function initDb() {
       if (!docs.length) return;
       const gens = docs.map((d) => d.gen || d.upd || "");
       const top = gens.sort().at(-1);
+      if (FILE_GEN && top && top < FILE_GEN) return; // o arquivo publicado é mais novo que o banco
+      DB_OK = true; dbApply();
       let use = docs.filter((d) => (d.gen || d.upd || "") === top);
       if (use[0] && use[0].parts && use.length < use[0].parts) use = docs; // geração incompleta: junta tudo
       const map = new Map();
       use.sort((a, b) => (a.part || 0) - (b.part || 0)).forEach((d) => d.items.forEach((it) => map.set(it.id, it)));
       applyItems([...map.values()], "banco");
     }, () => {});
-    db.doc("feed/main").onSnapshot((s) => { if (s.exists) applyFeed(s.data()); }, () => {});
-    db.doc("meta/status").onSnapshot((s) => { if (s.exists) applyStatus(s.data()); }, () => {});
+    db.doc("feed/main").onSnapshot((s) => { if (s.exists) { DB_FEED = s.data(); dbApply(); } }, () => {});
+    db.doc("meta/status").onSnapshot((s) => { if (s.exists) { DB_STATUS = s.data(); dbApply(); } }, () => {});
   } catch { /* banco indisponível nesta visualização */ }
   try {
     const user = await window.claude.use("user");
@@ -729,7 +803,14 @@ function metaLine(it) {
   else if (it.eps && it.tp !== "MOVIE") p.push(it.eps + " eps");
   return p.join(" · ");
 }
-const hasLeg = (it) => (it.prov || []).some((p) => PROV[p] && PROV[p].leg);
+const hasLeg = (it) => (it.prov || []).some((p) => PROV[p] && PROV[p].leg) || freeKinds(it).has("leg");
+const freeEps = (it) => Object.keys(it.yt || {}).map(Number).filter((n) => (it.yt[n] || []).length).sort((a, b) => a - b);
+function freeKinds(it) { const k = new Set(); for (const arr of Object.values(it.yt || {})) for (const v of arr) k.add(v.k); return k; }
+const freeCount = (it) => freeEps(it).length;
+const freeSrc = (it) => (it.src || []).filter((s) => s && s.u);
+const hasFree = (it) => freeCount(it) > 0 || freeSrc(it).some((s) => regOk(s.reg));
+function freeNext(it) { const eps = freeEps(it); if (!eps.length) return null; const p = ME.prog[it.id]; const seen = new Set(ME.seen[it.id] || []); return (p && eps.includes(p.ep) && !seen.has(p.ep) ? p.ep : eps.find((n) => !seen.has(n))) || eps[0]; }
+const ICON_FREE = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
 
 /* ---------------- pôster gerado ---------------- */
 function hash(s) { let h = 2166136261; for (const c of String(s)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
@@ -746,6 +827,7 @@ function poster(it, o = {}) {
   if (!o.nobadge) {
     const nw = isNew(it); if (nw && !nw.weekly) badges.push(`<span class="pill new">EP ${nw.aired}</span>`);
     if (it.dub === 2) badges.push('<span class="pill dub">DUB</span>'); else if (it.dub === 1) badges.push('<span class="pill dubsoon">DUB EM BREVE</span>');
+    if (hasFree(it)) badges.push('<span class="pill free">GRÁTIS</span>');
   }
   const mc = Media.peek(it);
   const src = (o.wide && mc && mc.banner) || (mc && mc.cover) || (!NOIMG && it.pic) || "";
@@ -781,7 +863,8 @@ function featured() {
   const hot = ITEMS.filter((x) => x.hot && x.st === "airing").sort((a, b) => a.hot - b.hot);
   const syn = hot.filter((x) => x.syn);
   const rest = airing().filter((x) => x.syn && !hot.includes(x));
-  return [...new Set([...syn, ...hot, ...rest])].slice(0, 5);
+  const free = ITEMS.filter((x) => hasFree(x)).sort((a, b) => freeCount(b) - freeCount(a) || byScore(a, b)).slice(0, 2);
+  return [...new Set([...syn.slice(0, 3), ...free, ...hot, ...rest])].slice(0, 6);
 }
 
 /* ---------------- roteamento ---------------- */
@@ -801,6 +884,12 @@ window.addEventListener("hashchange", route);
 let navDepth = 0;
 function openTitle(id) { navDepth++; location.hash = "t-" + id; }
 function rerender() {
+  const ae = document.activeElement, fid = ae && ae.id && ae.tagName === "INPUT" ? ae.id : null;
+  const sel = fid ? [ae.selectionStart, ae.selectionEnd] : null;
+  renderNow();
+  if (fid) { const el = document.getElementById(fid); if (el && el !== document.activeElement) { el.focus(); try { el.setSelectionRange(sel[0], sel[1]); } catch {} } }
+}
+function renderNow() {
   renderSync();
   if (view === "inicio") renderInicio();
   else if (view === "calendario") renderCalendario();
@@ -829,7 +918,6 @@ function heroHTML(list) {
   if (it.dub === 2) tags.push('<span class="pill dub">Dublado PT-BR</span>'); else if (it.dub === 1) tags.push('<span class="pill dubsoon">Dublagem PT-BR anunciada</span>');
   if (hasLeg(it)) tags.push('<span class="pill leg">Legendado PT-BR</span>');
   if (it.hot) tags.push(`<span class="pill live">#${it.hot} em alta</span>`);
-  const p0 = (it.prov || [])[0];
   return `<div class="hero" aria-roledescription="destaque">
     <div class="art" data-artfor="${esc(it.id)}">${poster(it, { wide: true, nobadge: true }).replace('class="poster wide"', 'class="poster wide" style="--h:' + hueOf(it) + ';position:absolute;inset:0;height:100%;border-radius:0;aspect-ratio:auto"')}${artImg(it)}</div>
     <div class="shade"></div>
@@ -840,8 +928,7 @@ function heroHTML(list) {
       ${it.syn ? `<p class="syn">${esc(it.syn)}</p>` : ""}
       ${nextTxt}
       <div class="ctas">
-        <button class="btn primary" data-open="${esc(it.id)}">${ICON.play}Ver episódios</button>
-        ${p0 && PROV[p0] ? `<a class="btn ghost" href="${PROV[p0].u(encodeURIComponent(it.en || it.t))}" target="_blank" rel="noopener">${ICON.ext}${esc(PROV[p0].n)}</a>` : ""}
+        ${freeCount(it) ? `<button class="btn primary" data-watch="${esc(it.id)}">${ICON.play}Assistir grátis · EP ${freeNext(it)}</button><button class="btn ghost" data-open="${esc(it.id)}">Ver episódios</button>` : `<button class="btn primary" data-open="${esc(it.id)}">${ICON.play}Ver episódios</button>`}
         <button class="btn ghost" data-list="${esc(it.id)}" aria-pressed="${inList(it.id)}">${inList(it.id) ? ICON.check + "Na minha lista" : ICON.plus + "Minha lista"}</button>
       </div>
     </div>
@@ -871,9 +958,19 @@ function renderInicio() {
   const classics = ITEMS.filter((x) => x.st === "finished" && x.sc && x.tp !== "MOVIE").sort(byScore).slice(0, 20);
   const gen = (g) => ITEMS.filter((x) => (x.g || []).includes(g) && x.sc).sort(byScore).slice(0, 18);
   const dubFirst = ME.prefs.audio === "dub";
+  const freeList = ITEMS.filter((x) => hasFree(x)).sort((a, b) => (b.st === "airing") - (a.st === "airing") || freeCount(b) - freeCount(a) || byScore(a, b));
+  const freeSub = (x) => {
+    const parts = [];
+    if (freeCount(x)) parts.push(`${freeCount(x)} ep${freeCount(x) > 1 ? "s" : ""} no player`);
+    const pl = [...new Set(freeSrc(x).filter((s) => regOk(s.reg)).map((s) => (FREE[s.p] || FREE.other).n))];
+    if (pl.length) parts.push(pl.join(", "));
+    return parts.join(" · ");
+  };
+  const freeRail = rail("gratis", "Assista grátis agora", "Episódios oficiais e gratuitos: no player do Sakuga e nas plataformas grátis", freeList.slice(0, 24), { more: "gratis", card: (x) => ({ sub: freeSub(x) }) });
   const dubRail = rail("dub", "Dublagem PT-BR", "Dublagens novas, anunciadas e os dublados mais vistos", dubs, { more: "dub" });
   v.innerHTML = [
     `<div id="herobox">${heroHTML(feat)}</div>`,
+    freeRail,
     cont.length ? rail("cont", "Continuar assistindo", "", cont.map(([x]) => x), { card: (x) => { const p = ME.prog[x.id]; return { sub: `EP ${p.ep || 1}`, prog: p.d ? Math.min(1, p.t / p.d) : 0 }; } }) : "",
     recent.length ? rail("novos", "Saiu agora", "Episódios lançados nos últimos 4 dias", recent.map(([, x]) => x), { wide: true, card: (x) => { const s = airState(x); return { wide: true, sub: `EP ${s.aired} · ${ago(lastEpAt(x))}` }; } }) : "",
     dubFirst ? dubRail : "",
@@ -925,12 +1022,11 @@ function renderCalendario() {
   const dayBtns = days.map((d, i) => { const n = epsOnDay(d).length; const lab = i === 3 ? "Hoje" : i === 2 ? "Ontem" : i === 4 ? "Amanhã" : fmtWD.format(new Date(d)).replace(".", ""); return `<button class="day" data-day="${i - 3}" aria-pressed="${i - 3 === calDay}"><small>${lab}</small><b class="num">${new Date(d).getDate()}</b><em>${n} ep${n === 1 ? "" : "s"}</em></button>`; }).join("");
   const rows = slots.map(({ it, n, at, approx }) => {
     const past = at <= tnow, live = past && tnow - at < 3 * 36e5;
-    const prov = (it.prov || []).map((p) => PROV[p] && PROV[p].n).filter(Boolean).join(", ");
     const tags = [];
     if (live) tags.push('<span class="pill new">Novo</span>');
     if (it.dub === 2) tags.push('<span class="pill dub">DUB</span>'); else if (it.dub === 1) tags.push('<span class="pill dubsoon">DUB em breve</span>');
     if (hasLeg(it)) tags.push('<span class="pill leg">LEG</span>');
-    const state = past ? (prov ? "Disponível na " + prov : "Disponível") : `Em <span class="countdown" data-cd="${at}">${countdown(at)}</span>`;
+    const state = past ? ((it.yt || {})[n] ? "Grátis no Sakuga" : "Lançado") : `Em <span class="countdown" data-cd="${at}">${countdown(at)}</span>`;
     return `<button class="slot${past ? " past" : ""}${live ? " now" : ""}" data-open="${esc(it.id)}"><span class="time">${fmtT.format(new Date(at))}${approx ? "<small>aprox.</small>" : ""}</span>${poster(it, { nobadge: true })}<span class="info"><b>${esc(it.t)}</b><span>${n ? "Episódio " + n + (it.air && it.air.total ? " de " + it.air.total : "") : "Novo episódio"} · ${state}</span></span><span class="tags">${tags.join("")}</span></button>`;
   }).join("");
   v.innerHTML = `<div class="wrap section">
@@ -953,14 +1049,14 @@ function allFeed() {
   for (const [at, it] of recentEps(24 * 7)) {
     const s = airState(it); if (s.weekly) continue;
     const key = "ep" + it.id + s.aired;
-    if (!seen.has(key)) out.push({ k: "ep", id: it.id, ep: s.aired, t: at, txt: `Episódio ${s.aired}${s.total ? " de " + s.total : ""} disponível${(it.prov || []).length ? " na " + (it.prov || []).map((p) => PROV[p] && PROV[p].n).filter(Boolean).join(" e ") : ""}.` });
+    if (!seen.has(key)) out.push({ k: "ep", id: it.id, ep: s.aired, t: at, txt: `Episódio ${s.aired}${s.total ? " de " + s.total : ""} lançado${(it.yt || {})[s.aired] ? "; grátis para assistir no Sakuga" : ""}.` });
   }
   return out.filter((f) => f.t <= now() + 30 * DAY).sort((a, b) => b.t - a.t);
 }
 function renderNovidades() {
   const v = $("#v-novidades");
   let list = allFeed();
-  const groups = { ep: ["ep"], dub: ["dub", "leg"], estreia: ["estreia", "temporada", "anuncio"], filme: ["filme", "lancamento"] };
+  const groups = { gratis: ["gratis"], ep: ["ep"], dub: ["dub", "leg"], estreia: ["estreia", "temporada", "anuncio"], filme: ["filme", "lancamento"] };
   if (feedFilter !== "todos") list = list.filter((f) => groups[feedFilter].includes(f.k));
   const st = STATUS || {};
   const last = st.lastRun ? Date.parse(st.lastRun) : null;
@@ -983,16 +1079,17 @@ function renderNovidades() {
       ${st.log ? `<p>${esc(st.log)}</p>` : ""}
       <p>Fonte dos dados: ${esc(SOURCE === "banco" ? "banco do Sakuga, atualizado pelo agente" : "catálogo publicado com o app")}${st.base ? " · base " + esc(st.base) : ""}.</p>
     </div>
-    <div class="filters" role="group" aria-label="Tipo de novidade">${[["todos", "Tudo"], ["ep", "Episódios"], ["dub", "Dublagem e legenda"], ["estreia", "Estreias e temporadas"], ["filme", "Filmes e lançamentos"]].map(([k, l]) => `<button class="chip" data-feedf="${k}" aria-pressed="${feedFilter === k}">${l}</button>`).join("")}</div>
+    <div class="filters" role="group" aria-label="Tipo de novidade">${[["todos", "Tudo"], ["gratis", "Grátis"], ["ep", "Episódios"], ["dub", "Dublagem e legenda"], ["estreia", "Estreias e temporadas"], ["filme", "Filmes e lançamentos"]].map(([k, l]) => `<button class="chip" data-feedf="${k}" aria-pressed="${feedFilter === k}">${l}</button>`).join("")}</div>
     <div class="feed">${rows || '<div class="empty">Nada novo neste filtro por enquanto. O agente volta a procurar a cada 12 horas.</div>'}</div>
   </div>${footer()}`;
 }
 
 /* ---------------- EXPLORAR ---------------- */
-const EX = { q: "", tp: "", st: "", dub: false, g: "", sort: "rel", n: 48 };
+const EX = { q: "", tp: "", st: "", dub: false, free: false, g: "", sort: "rel", n: 48 };
 function applyMore(key) {
-  Object.assign(EX, { q: "", tp: "", st: "", dub: false, g: "", sort: "rel", n: 48 });
+  Object.assign(EX, { q: "", tp: "", st: "", dub: false, free: false, g: "", sort: "rel", n: 48 });
   if (key === "dub") { EX.dub = true; EX.sort = "rel"; }
+  else if (key === "gratis") { EX.free = true; }
   else if (key === "temporada") EX.st = "airing";
   else if (key === "breve") EX.st = "upcoming";
   else if (key === "filmes") { EX.tp = "MOVIE"; EX.sort = "new"; }
@@ -1010,11 +1107,12 @@ function filtered() {
     if (EX.st === "upcoming" && !(it.st === "upcoming" || it.st === "season")) return false;
     if (EX.st === "finished" && it.st !== "finished") return false;
     if (EX.dub && !it.dub) return false;
+    if (EX.free && !hasFree(it)) return false;
     if (EX.g && !(it.g || []).includes(EX.g)) return false;
     if (words.length) { const ix = searchIndex(it); return words.every((w) => ix.includes(w)); }
     return true;
   });
-  const rel = (it) => (it.st === "airing" ? 30 : 0) + (it.hot ? 40 - it.hot : 0) + (it.dub ? 6 : 0) + (it.sc || 0) * 2 + (it.syn ? 3 : 0) + (q && norm(it.t).startsWith(q) ? 50 : 0);
+  const rel = (it) => (hasFree(it) ? 25 : 0) + (it.st === "airing" ? 30 : 0) + (it.hot ? 40 - it.hot : 0) + (it.dub ? 6 : 0) + (it.sc || 0) * 2 + (it.syn ? 3 : 0) + (q && norm(it.t).startsWith(q) ? 50 : 0);
   if (EX.sort === "score") list.sort(byScore);
   else if (EX.sort === "new") list.sort((a, b) => (b.y || 0) - (a.y || 0) || byScore(a, b));
   else if (EX.sort === "az") list.sort((a, b) => a.t.localeCompare(b.t, "pt-BR"));
@@ -1030,6 +1128,7 @@ function renderExplorar(keepFocus) {
     <label class="bigsearch"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="sr">Buscar</span><input id="qex" type="search" placeholder="Título em português, inglês ou japonês, estúdio ou gênero" value="${esc(EX.q)}" autocomplete="off"></label>
     <div class="filters" role="group" aria-label="Filtros">
       ${chip("tp", "", "Tudo")}${chip("tp", "TV", "Séries")}${chip("tp", "MOVIE", "Filmes")}${chip("tp", "ONA", "Web")}
+      <button class="chip" data-ex="free" data-val="${!EX.free}" aria-pressed="${EX.free}">Grátis no Sakuga</button>
       <button class="chip" data-ex="dub" data-val="${!EX.dub}" aria-pressed="${EX.dub}">Dublado PT-BR</button>
       <select class="select" id="exst" aria-label="Situação"><option value="">Qualquer situação</option><option value="airing"${EX.st === "airing" ? " selected" : ""}>Em exibição</option><option value="upcoming"${EX.st === "upcoming" ? " selected" : ""}>Em breve</option><option value="finished"${EX.st === "finished" ? " selected" : ""}>Completos</option></select>
       <select class="select" id="exg" aria-label="Gênero"><option value="">Todos os gêneros</option>${gens.map((g) => `<option value="${g}"${EX.g === g ? " selected" : ""}>${esc(GENRE_LABEL[g])}</option>`).join("")}</select>
@@ -1061,15 +1160,14 @@ function renderTitulo(id) {
   if (!it) { v.innerHTML = `<div class="wrap section"><div class="empty">${ITEMS.length ? "Este anime não está mais no catálogo." : "Carregando o anime…"}</div></div>`; return; }
   const s = airState(it);
   const q = encodeURIComponent(it.en || it.r || it.t);
-  const provs = (it.prov || []).filter((p) => PROV[p]);
-  const where = provs.map((p, i) => `<a class="${i === 0 ? "main" : ""}" href="${PROV[p].u(q)}" target="_blank" rel="noopener">${esc(PROV[p].n)}<span>${PROV[p].leg ? "Legendado" : "Original"}${it.dub === 2 && i === 0 ? " e dublado" : ""} ${ICON.ext.replace("<svg", '<svg width="14" height="14"')}</span></a>`).join("")
-    + `<a href="https://www.justwatch.com/br/busca?q=${q}" target="_blank" rel="noopener">Todas as plataformas no Brasil<span>JustWatch ${ICON.ext.replace("<svg", '<svg width="14" height="14"')}</span></a>`;
+  const fe = freeEps(it), fk = freeKinds(it);
   const audio = [];
   audio.push(["Áudio original", "Japonês" + (it.tp === "ONA" && /chin|donghua|quanzhi|douluo/i.test(it.r) ? " ou chinês" : "")]);
   audio.push(["Dublagem PT-BR", it.dub === 2 ? '<span class="pill dub">Disponível</span>' : it.dub === 1 ? '<span class="pill dubsoon">Anunciada, sem data</span>' : "Sem anúncio até agora"]);
-  audio.push(["Legendas", hasLeg(it) ? "Português (BR) nas plataformas oficiais" : provs.length ? "Inglês na plataforma; PT-BR não confirmado" : "Depende da plataforma"]);
+  audio.push(["Legendas", hasLeg(it) ? "Português (BR)" : "PT-BR não confirmada"]);
+  audio.push(["Grátis no Sakuga", fe.length ? `${fe.length} episódio${fe.length > 1 ? "s" : ""} (${[...fk].map((k) => (k === "dub" ? "dublado" : "legendado")).join(" e ")})` : freeSrc(it).length ? "Nas plataformas grátis ao lado" : "Nenhum episódio oficial gratuito ainda"]);
   const fich = [["Tipo", TYPE_LABEL[it.tp] || it.tp], ["Situação", statusText(it)], ["Episódios", it.st === "airing" && s && !s.weekly ? `${s.aired} de ${s.total || "?"}` : it.aired || it.eps || "—"], it.dur ? ["Duração", it.dur + " min" + (it.tp === "MOVIE" ? "" : " por episódio")] : null, ["Temporada", seasonText(it) || "—"], it.stu ? ["Estúdio", it.stu] : null, it.sc ? ["Nota média", it.sc.toFixed(1) + " / 10"] : null, ["Atualizado", it.upd ? ago(Date.parse(it.upd)) : "—"]].filter(Boolean);
-  const links = [it.al && ["AniList", "https://anilist.co/anime/" + it.al], it.mal && ["MyAnimeList", "https://myanimelist.net/anime/" + it.mal], it.lc && ["LiveChart", "https://www.livechart.me/anime/" + it.lc], ["Trailer no YouTube", "https://www.youtube.com/results?search_query=" + encodeURIComponent((it.en || it.r) + " trailer")]].filter(Boolean);
+  const links = [it.al && ["AniList", "https://anilist.co/anime/" + it.al], it.mal && ["MyAnimeList", "https://myanimelist.net/anime/" + it.mal], it.lc && ["LiveChart", "https://www.livechart.me/anime/" + it.lc]].filter(Boolean);
   const fam = ITEMS.filter((x) => x.fr === it.fr && x.id !== it.id).sort((a, b) => (a.y || 9999) - (b.y || 9999));
   const sim = ITEMS.filter((x) => x.id !== it.id && x.fr !== it.fr && (x.g || []).filter((g) => (it.g || []).includes(g)).length >= 2).sort(byScore).slice(0, 16);
   const nextBox = s && s.next ? `<span class="nextep" style="display:inline-flex;gap:8px;align-items:center;font-size:14px">Episódio ${s.aired + 1} ${esc(whenText(s.next))} · <span class="countdown" data-cd="${s.next}">${countdown(s.next)}</span>${s.approx ? " · horário aproximado" : ""}</span>` : "";
@@ -1083,10 +1181,10 @@ function renderTitulo(id) {
         <h1>${esc(it.t)}</h1>
         ${sub ? `<div class="alt">${esc(sub)}</div>` : ""}
         <div class="meta"><span>${esc(statusText(it))}</span><span class="sep">·</span><span>${esc(metaLine(it))}</span>${it.stu ? `<span class="sep">·</span><span>${esc(it.stu)}</span>` : ""}${it.sc ? `<span class="sep">·</span><span>★ ${it.sc.toFixed(1)}</span>` : ""}</div>
-        <div class="meta">${it.dub === 2 ? '<span class="pill dub">Dublado PT-BR</span>' : it.dub === 1 ? '<span class="pill dubsoon">Dublagem PT-BR anunciada</span>' : ""}${hasLeg(it) ? '<span class="pill leg">Legendado PT-BR</span>' : ""}${(it.g || []).map((g) => `<span class="pill soft">${esc(GENRE_LABEL[g] || g)}</span>`).join("")}</div>
+        <div class="meta">${it.dub === 2 ? '<span class="pill dub">Dublado PT-BR</span>' : it.dub === 1 ? '<span class="pill dubsoon">Dublagem PT-BR anunciada</span>' : ""}${hasLeg(it) ? '<span class="pill leg">Legendado PT-BR</span>' : ""}${hasFree(it) ? `<span class="pill free">${fe.length ? fe.length + " grátis" : "Grátis"}</span>` : ""}${(it.g || []).map((g) => `<span class="pill soft">${esc(GENRE_LABEL[g] || g)}</span>`).join("")}</div>
         ${nextBox ? `<div style="margin-bottom:14px">${nextBox}</div>` : ""}
         <div class="ctas">
-          ${provs[0] ? `<a class="btn primary" href="${PROV[provs[0]].u(q)}" target="_blank" rel="noopener">${ICON.play}Assistir na ${esc(PROV[provs[0]].n)}</a>` : `<a class="btn primary" href="https://www.justwatch.com/br/busca?q=${q}" target="_blank" rel="noopener">${ICON.ext}Onde assistir</a>`}
+          ${fe.length ? `<button class="btn primary" data-watch="${esc(it.id)}">${ICON.play}Assistir grátis · EP ${freeNext(it)}</button>` : (() => { const s0 = freeSrc(it).find((s) => regOk(s.reg)); return s0 ? `<a class="btn primary" href="${esc(s0.u)}" target="_blank" rel="noopener">${ICON.play}Assistir grátis na ${esc((FREE[s0.p] || FREE.other).n)}</a>` : ""; })()}
           <button class="btn" data-list="${esc(it.id)}" aria-pressed="${inList(it.id)}">${inList(it.id) ? ICON.check + "Na minha lista" : ICON.plus + "Minha lista"}</button>
           <button class="btn" data-playfile="${esc(it.id)}">${ICON.file}Tocar meu arquivo</button>
         </div>
@@ -1100,7 +1198,7 @@ function renderTitulo(id) {
       ${epsHTML(it, s)}
     </div>
     <aside style="display:grid;gap:16px;align-content:start">
-      <div class="box"><h3>Onde assistir no Brasil</h3><div class="where">${where}</div></div>
+      ${srcBox(it, fe)}
       <div class="box"><h3>Áudio e legenda</h3><dl class="kv">${audio.map(([k, val]) => `<dt>${esc(k)}</dt><dd>${val.startsWith("<span") ? val : esc(val)}</dd>`).join("")}</dl></div>
       <div class="box"><h3>Ficha</h3><dl class="kv">${fich.map(([k, val]) => `<dt>${esc(k)}</dt><dd class="num">${esc(val)}</dd>`).join("")}</dl><div class="links">${links.map(([l, u]) => `<a href="${u}" target="_blank" rel="noopener">${esc(l)}</a>`).join("")}</div></div>
     </aside>
@@ -1126,10 +1224,20 @@ function fillTitleMedia(it) {
     $$(".ep[data-n]").forEach((row) => {
       const e = m.eps[row.dataset.n]; if (!e) return;
       const th = row.querySelector(".thumb");
-      if (e.thumb && th && !th.querySelector("img") && !row.classList.contains("future")) th.insertAdjacentHTML("beforeend", imgTag(e.thumb, "", "Episódio " + row.dataset.n));
+      if (e.thumb && th && !th.querySelector("img") && !row.classList.contains("future") && !th.dataset.yt) th.insertAdjacentHTML("beforeend", imgTag(e.thumb, "", "Episódio " + row.dataset.n));
       if (e.title) { const b = row.querySelector(".t b"); if (b && !b.dataset.full) { b.textContent = `Episódio ${row.dataset.n} · ${e.title}`; b.dataset.full = 1; } }
     });
   });
+}
+function srcBox(it, fe) {
+  const list = freeSrc(it).slice().sort((a, b) => regOk(b.reg) - regOk(a.reg));
+  if (!list.length && !fe.length) return `<div class="box"><h3>Assistir grátis</h3><p class="boxp">Ainda não há episódio oficial gratuito deste anime. O agente procura em plataformas grátis do Brasil e de fora a cada 12 horas, e eles aparecem aqui assim que forem encontrados.</p></div>`;
+  const rows = list.map((s) => {
+    const pl = FREE[s.p] || FREE.other, ok = regOk(s.reg);
+    const lang = s.lang === "dub" ? "Dublado PT-BR" : s.lang === "leg" ? "Legendado PT-BR" : s.lang === "en" ? "Legendado em inglês" : s.lang === "orig" ? "Áudio original, sem legenda PT" : "";
+    return `<a class="srcrow${ok ? "" : " far"}" href="${esc(s.u)}" target="_blank" rel="noopener" data-src="${esc(s.p)}"><b>${esc(pl.n)}</b><span>${[s.eps ? "Episódios " + esc(s.eps) : "", lang, esc(REG[s.reg] || s.reg || "")].filter(Boolean).join(" · ")}${s.note ? " · " + esc(s.note) : ""}</span></a>`;
+  }).join("");
+  return `<div class="box"><h3>Assistir grátis</h3>${fe.length ? `<p class="boxp">${fe.length} episódio${fe.length > 1 ? "s" : ""} toca${fe.length > 1 ? "m" : ""} aqui no player do Sakuga (lista de episódios).</p>` : ""}${rows ? `<div class="srcs">${rows}</div><p class="boxp">${IS_APP ? "Abre dentro do app." : "Abre o site oficial da plataforma."} As marcadas como “Só no …” só tocam naquele país.</p>` : ""}</div>`;
 }
 function autoSyn(it) {
   const g = (it.g || []).slice(0, 3).map((x) => (GENRE_LABEL[x] || x).toLowerCase());
@@ -1141,6 +1249,8 @@ function epsHTML(it, s) {
   let count = 0, upcoming = 0;
   if (s && !s.weekly) { count = s.aired; upcoming = s.next ? Math.min(3, (s.total || s.aired + 3) - s.aired) : 0; }
   else count = it.aired || it.eps || 0;
+  const maxFree = Math.max(0, ...freeEps(it));
+  if (maxFree > count) count = maxFree;
   if (!count && !upcoming) return it.st === "upcoming" || it.st === "season" ? `<div class="empty">Ainda sem episódios. A estreia está prevista para ${esc(seasonText(it) || "breve")}; o agente avisa quando houver data.</div>` : "";
   const total = count + upcoming, PAGE = 50;
   const pages = Math.ceil(total / PAGE);
@@ -1155,16 +1265,17 @@ function epsHTML(it, s) {
     const p = ME.prog[it.id];
     const when = at ? (fut ? whenText(at) : fmtD.format(new Date(at))) : "";
     const mc = Media.peek(it), me = mc && mc.eps[n];
-    rows.push(`<div class="ep${fut ? " future" : ""}${nx ? " next" : ""}${seen.has(n) ? " seen" : ""}" data-n="${n}"><span class="thumb" style="--h:${(hueOf(it) + n * 9) % 360}"><span class="no">${String(n).padStart(2, "0")}</span>${me && me.thumb && !fut ? imgTag(me.thumb, "", "Episódio " + n) : ""}${p && p.ep === n && p.d ? `<i class="eprog" style="width:${Math.round(Math.min(1, p.t / p.d) * 100)}%"></i>` : ""}</span><span class="t"><b>${me && me.title ? `Episódio ${n} · ${esc(me.title)}` : `Episódio ${n}`}</b><span>${fut ? (nx ? `Estreia ${esc(when)} · <span class="countdown" data-cd="${at}">${countdown(at)}</span>` : `Previsto ${esc(when)}`) : (when ? "Lançado em " + esc(when) : "Disponível")}${p && p.ep === n && p.d ? ` · parou em ${fmtClock(p.t)}` : ""}</span></span><span class="acts">${fut ? "" : `<button class="check" data-seen="${esc(it.id)}" data-ep="${n}" aria-pressed="${seen.has(n)}" aria-label="Marcar episódio ${n} como assistido">${ICON.check}</button>`}</span></div>`);
+    rows.push(`<div class="ep${fut ? " future" : ""}${nx ? " next" : ""}${seen.has(n) ? " seen" : ""}" data-n="${n}"><span class="thumb" style="--h:${(hueOf(it) + n * 9) % 360}"${!fut && (it.yt || {})[n] ? ` data-yt="1" role="button" tabindex="0" data-watch="${esc(it.id)}" data-ep="${n}"` : ""}><span class="no">${String(n).padStart(2, "0")}</span>${!fut && (it.yt || {})[n] && !NOIMG ? imgTag("https://i.ytimg.com/vi/" + it.yt[n][0].v + "/hqdefault.jpg", "", "Episódio " + n) : me && me.thumb && !fut ? imgTag(me.thumb, "", "Episódio " + n) : ""}${!fut && (it.yt || {})[n] ? '<span class="playov">' + ICON_FREE + "</span>" : ""}${p && p.ep === n && p.d ? `<i class="eprog" style="width:${Math.round(Math.min(1, p.t / p.d) * 100)}%"></i>` : ""}</span><span class="t"><b>${me && me.title ? `Episódio ${n} · ${esc(me.title)}` : `Episódio ${n}`}</b><span>${!fut && (it.yt || {})[n] ? '<i class="freetag">Grátis no Sakuga</i> · ' : ""}${fut ? (nx ? `Estreia ${esc(when)} · <span class="countdown" data-cd="${at}">${countdown(at)}</span>` : `Previsto ${esc(when)}`) : (when ? "Lançado em " + esc(when) : (it.yt || {})[n] ? "Toca aqui no Sakuga" : "Lançado · sem versão grátis oficial ainda")}${p && p.ep === n && p.d ? ` · parou em ${fmtClock(p.t)}` : ""}</span></span><span class="acts">${!fut && (it.yt || {})[n] ? (it.yt[n].map((v) => `<button class="btn sm ${v.k === "dub" ? "primary" : ""} epplay" data-watch="${esc(it.id)}" data-ep="${n}" data-kind="${v.k}" aria-label="Assistir episódio ${n} ${v.k === "dub" ? "dublado" : "legendado"}">${ICON_FREE}${v.k === "dub" ? "Dublado" : "Legendado"}</button>`).join("")) : ""}${fut ? "" : `<button class="check" data-seen="${esc(it.id)}" data-ep="${n}" aria-pressed="${seen.has(n)}" aria-label="Marcar episódio ${n} como assistido">${ICON.check}</button>`}</span></div>`);
   }
   const ranges = pages > 1 ? `<div class="ranges">${Array.from({ length: pages }, (_, i) => `<button class="chip" data-range="${i}" aria-pressed="${i === epRange}">${i * PAGE + 1}–${Math.min(total, (i + 1) * PAGE)}</button>`).join("")}</div>` : "";
-  return `<div class="eps-h"><h2>Episódios</h2><span class="count">${count} disponíve${count === 1 ? "l" : "is"}${s && s.total ? " de " + s.total : ""}</span></div>${ranges}<div class="eps" style="margin-top:12px">${rows.join("")}</div>`;
+  const fc = freeCount(it);
+  return `<div class="eps-h"><h2>Episódios</h2><span class="count">${count} lançado${count === 1 ? "" : "s"}${s && s.total ? " de " + s.total : ""}${fc ? ` · ${fc} grátis no Sakuga` : ""}</span></div>${ranges}<div class="eps" style="margin-top:12px">${rows.join("")}</div>`;
 }
 function fmtClock(sec) { sec = Math.max(0, Math.floor(sec || 0)); const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60; return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(s).padStart(2, "0"); }
 
 /* ---------------- interações ---------------- */
 document.addEventListener("click", (e) => {
-  const t = e.target.closest("button, a"); if (!t) return;
+  const t = e.target.closest("button, a, [data-watch]"); if (!t) return;
   if (t.dataset.go) { go(t.dataset.go); return; }
   if (t.dataset.open) { openTitle(t.dataset.open); return; }
   if (t.dataset.list) { toggleList(t.dataset.list); return; }
@@ -1174,7 +1285,7 @@ document.addEventListener("click", (e) => {
   if (t.dataset.day != null) { calDay = Number(t.dataset.day); renderCalendario(); return; }
   if (t.dataset.calf) { calFilter = t.dataset.calf; renderCalendario(); return; }
   if (t.dataset.feedf) { feedFilter = t.dataset.feedf; renderNovidades(); return; }
-  if (t.dataset.ex) { const k = t.dataset.ex; EX[k] = k === "dub" ? t.dataset.val === "true" : t.dataset.val; EX.n = 48; renderExplorar(); return; }
+  if (t.dataset.ex) { const k = t.dataset.ex; EX[k] = k === "dub" || k === "free" ? t.dataset.val === "true" : t.dataset.val; EX.n = 48; renderExplorar(); return; }
   if (t.dataset.range != null) { epRange = Number(t.dataset.range); renderTitulo(titleId); return; }
   if (t.dataset.seen) {
     const id = t.dataset.seen, n = Number(t.dataset.ep); const set = new Set(ME.seen[id] || []);
@@ -1183,6 +1294,7 @@ document.addEventListener("click", (e) => {
     t.setAttribute("aria-pressed", set.has(n)); t.closest(".ep").classList.toggle("seen", set.has(n)); return;
   }
   if (t.dataset.playfile) { Player.open(BY.get(t.dataset.playfile)); return; }
+  if (t.dataset.watch) { const it = BY.get(t.dataset.watch); if (it) YTP.open(it, t.dataset.ep ? Number(t.dataset.ep) : freeNext(it), t.dataset.kind || null); return; }
   if (t.id === "tback") { if (navDepth > 0) { navDepth--; history.back(); } else go("inicio"); return; }
   if (t.id === "exmore") { EX.n += 48; renderExplorar(); return; }
   if (t.id === "logo") { go("inicio"); return; }
@@ -1421,6 +1533,100 @@ const Player = (() => {
   const saved = store.get("enh", "off"); if (saved !== "off") enhance = saved;
   setPlayIcon();
   return { open: (it, n) => { open(it, n); if (enhance !== "off") setEnhance(enhance); } };
+})();
+
+
+/* ---------------- PLAYER DE EPISÓDIOS GRÁTIS OFICIAIS (YouTube) ---------------- */
+const YTP = (() => {
+  const P = $("#ytp");
+  let it = null, ep = null, kind = null, cur = null, player = null, apiP = null, tick = 0;
+  function api() {
+    if (window.YT && window.YT.Player) return Promise.resolve();
+    if (!apiP) apiP = new Promise((res, rej) => {
+      const prev = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => { if (prev) try { prev(); } catch {} res(); };
+      const s = document.createElement("script");
+      s.src = "https://www.youtube.com/iframe_api"; s.async = true; s.onerror = () => { apiP = null; rej(new Error("api")); };
+      document.head.appendChild(s);
+      setTimeout(() => { if (!(window.YT && window.YT.Player)) { apiP = null; rej(new Error("timeout")); } }, 12000);
+    });
+    return apiP;
+  }
+  function src() {
+    const arr = (it.yt || {})[ep] || [];
+    const want = kind || (ME.prefs.audio === "leg" ? "leg" : "dub");
+    return arr.find((v) => v.k === want) || arr[0] || null;
+  }
+  function bar() {
+    $("#ytttl").textContent = it.t;
+    const arr = (it.yt || {})[ep] || [];
+    $("#ytsub").textContent = `Episódio ${ep} · ${cur.k === "dub" ? "Dublado PT-BR" : "Legendado PT-BR"} · canal oficial ${cur.ch}`;
+    $("#ytaud").innerHTML = arr.length > 1 ? arr.map((v) => `<button data-ytk="${v.k}" aria-pressed="${v.k === cur.k}">${v.k === "dub" ? "Dublado" : "Legendado"}</button>`).join("") : "";
+    const eps = freeEps(it);
+    $("#yteps").innerHTML = eps.length > 1 ? `<span>Episódios grátis</span>${eps.map((n) => `<button data-yte="${n}" aria-pressed="${n === ep}">EP ${n}</button>`).join("")}` : "";
+  }
+  function msg(html) { const m = $("#ytmsg"); m.innerHTML = html; m.hidden = false; }
+  function fallback(reason) {
+    msg(`<p>${esc(reason)}</p><a class="btn primary" href="https://www.youtube.com/watch?v=${esc(cur.v)}" target="_blank" rel="noopener">${ICON_FREE}Assistir no canal oficial</a>`);
+  }
+  function load() {
+    cur = src(); if (!cur) return;
+    $("#ytmsg").hidden = true;
+    bar();
+    ME.prog[it.id] = Object.assign({}, ME.prog[it.id] || {}, { ep, at: now() }); saveMe();
+    if (FRAMED) { fallback("Dentro do Claude não dá para tocar vídeos de outro site. No app Android e no site do Sakuga o episódio toca aqui mesmo."); return; }
+    api().then(() => {
+      if (player && player.loadVideoById) { player.loadVideoById(cur.v); return; }
+      player = new window.YT.Player("ytframe", {
+        videoId: cur.v, host: "https://www.youtube-nocookie.com", width: "100%", height: "100%",
+        playerVars: { autoplay: 1, rel: 0, modestbranding: 1, playsinline: 1, hl: "pt", cc_lang_pref: "pt", iv_load_policy: 3, origin: location.origin },
+        events: {
+          onStateChange: (e) => { if (e.data === 0) next(); },
+          onError: (e) => fallback(e.data === 101 || e.data === 150 || e.data === 153 ? "O canal oficial só libera este episódio no próprio YouTube." : "Este episódio não está mais disponível no canal oficial."),
+        },
+      });
+    }).catch(() => fallback("Não consegui carregar o player agora. Confira sua internet."));
+    clearInterval(tick);
+    tick = setInterval(save, 5000);
+  }
+  function save() {
+    if (!player || !player.getCurrentTime || P.hidden) return;
+    try {
+      const t = player.getCurrentTime(), d = player.getDuration();
+      if (!d) return;
+      ME.prog[it.id] = { ep, t: Math.floor(t), d: Math.floor(d), at: now() };
+      if (t / d > 0.9) { const s = new Set(ME.seen[it.id] || []); s.add(ep); ME.seen[it.id] = [...s]; }
+      saveMe();
+    } catch { /* player ainda carregando */ }
+  }
+  function next() {
+    save();
+    const eps = freeEps(it), i = eps.indexOf(ep);
+    if (i >= 0 && i < eps.length - 1) { ep = eps[i + 1]; kind = null; load(); toast(`Episódio ${ep}`); }
+  }
+  function open(item, n, k) {
+    if (!item || !freeEps(item).length) return;
+    it = item; ep = n || freeNext(item); kind = k || null;
+    if (!ep || !(item.yt || {})[ep]) ep = freeEps(item)[0];
+    P.hidden = false; document.body.style.overflow = "hidden";
+    load();
+  }
+  function close() {
+    save(); clearInterval(tick);
+    try { player && player.stopVideo && player.stopVideo(); } catch {}
+    P.hidden = true; document.body.style.overflow = "";
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    rerender();
+  }
+  P.addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.id === "ytclose") close();
+    else if (b.id === "ytfs") { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); else if (P.requestFullscreen) P.requestFullscreen().catch(() => toast("Tela cheia indisponível aqui")); }
+    else if (b.dataset.ytk) { kind = b.dataset.ytk; ME.prefs.audio = kind; saveMe(); load(); }
+    else if (b.dataset.yte) { save(); ep = Number(b.dataset.yte); kind = null; load(); }
+  });
+  document.addEventListener("keydown", (e) => { if (!P.hidden && e.key === "Escape" && !document.fullscreenElement) close(); });
+  return { open, close, state: () => ({ id: it && it.id, ep, v: cur && cur.v, k: cur && cur.k }) };
 })();
 
 applyTheme();
