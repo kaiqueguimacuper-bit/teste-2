@@ -414,6 +414,9 @@ main { min-height: 70vh; }
 .srcrow:first-child:not(.far) span { color: inherit; opacity: .85; }
 .srcrow.far { opacity: .7; }
 .ep .thumb[data-yt] .no { display: none; }
+.ytcc { border: 1px solid rgba(255,255,255,.25); background: none; color: #fff; border-radius: 999px; padding: 6px 12px; font-size: 13px; white-space: nowrap; }
+.ytcc[aria-pressed="true"] { background: #ffb23e; color: #1b1300; border-color: transparent; }
+@media (max-width: 560px) { .ytcc { order: 6; } }
 </style>
 
 <header class="top">
@@ -499,6 +502,7 @@ main { min-height: 70vh; }
     <button class="pbtn" id="ytclose" aria-label="Fechar player"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18 9 12l6-6"/></svg></button>
     <div class="ttl"><b id="ytttl"></b><span id="ytsub"></span></div>
     <div class="ytaud" id="ytaud" role="group" aria-label="Áudio"></div>
+    <button class="ytcc" id="ytcc" aria-pressed="true" hidden>Legenda PT ligada</button>
     <button class="pbtn" id="ytfs" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
   </div>
   <div class="ytstage"><div class="ytbox"><div id="ytframe"></div><div class="ytmsg" id="ytmsg" hidden></div></div></div>
@@ -810,8 +814,9 @@ const freeCount = (it) => freeEps(it).length;
 const freeSrc = (it) => (it.src || []).filter((s) => s && s.u);
 const hasFree = (it) => freeCount(it) > 0 || freeSrc(it).some((s) => regOk(s.reg));
 function freeNext(it) { const eps = freeEps(it); if (!eps.length) return null; const p = ME.prog[it.id]; const seen = new Set(ME.seen[it.id] || []); return (p && eps.includes(p.ep) && !seen.has(p.ep) ? p.ep : eps.find((n) => !seen.has(n))) || eps[0]; }
-const KLABEL = { dub: "Dublado", leg: "Legendado", en: "Legenda em inglês", orig: "Original" };
-const KLONG = { dub: "Dublado PT-BR", leg: "Legendado PT-BR", en: "Legendado em inglês", orig: "Áudio original" };
+const KLABEL = { dub: "Dublado", leg: "Legendado", ja: "Japonês · leg. PT", en: "Inglês · leg. PT", orig: "Original · leg. PT" };
+const KLONG = { dub: "Dublado PT-BR", leg: "Legendado PT-BR", ja: "Áudio japonês · legenda automática em português", en: "Legenda em inglês · tradução automática para português", orig: "Áudio original · legenda automática em português" };
+const AUTOCC = (k) => k !== "dub" && k !== "leg";
 const ICON_FREE = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
 
 /* ---------------- pôster gerado ---------------- */
@@ -1557,7 +1562,7 @@ const YTP = (() => {
   function src() {
     const arr = (it.yt || {})[ep] || [];
     const want = kind || (ME.prefs.audio === "leg" ? "leg" : "dub");
-    const order = [want, want === "dub" ? "leg" : "dub", "en", "orig"];
+    const order = [want, want === "dub" ? "leg" : "dub", "ja", "en", "orig"];
     for (const k of order) { const f = arr.find((v) => v.k === k); if (f) return f; }
     return arr[0] || null;
   }
@@ -1569,6 +1574,29 @@ const YTP = (() => {
     const eps = freeEps(it);
     $("#yteps").innerHTML = eps.length > 1 ? `<span>Episódios grátis</span>${eps.map((n) => `<button data-yte="${n}" aria-pressed="${n === ep}">EP ${n}</button>`).join("")}` : "";
   }
+  let ccOn = true, ccFor = null;
+  function applyCC() {
+    if (!player || !cur || !AUTOCC(cur.k)) return;
+    try {
+      if (!ccOn) { player.unloadModule && player.unloadModule("captions"); return; }
+      player.loadModule && player.loadModule("captions");
+      const list = (player.getOption && player.getOption("captions", "tracklist")) || [];
+      const pt = list.find((t) => /^pt/.test(t.languageCode));
+      if (pt) { player.setOption("captions", "track", { languageCode: pt.languageCode }); }
+      else {
+        const base = list.find((t) => t.languageCode === "ja") || list.find((t) => /^en/.test(t.languageCode)) || list[0];
+        if (base) player.setOption("captions", "track", { languageCode: base.languageCode, translationLanguage: { languageCode: "pt", languageName: "Português" } });
+        else player.setOption && player.setOption("captions", "track", { languageCode: "pt" });
+      }
+      ccFor = cur.v;
+    } catch { /* legenda indisponível neste vídeo */ }
+  }
+  function ccBtn() {
+    const b = $("#ytcc"); if (!b) return;
+    b.hidden = !(cur && AUTOCC(cur.k));
+    b.setAttribute("aria-pressed", String(ccOn));
+    b.textContent = ccOn ? "Legenda PT ligada" : "Legenda PT desligada";
+  }
   function msg(html) { const m = $("#ytmsg"); m.innerHTML = html; m.hidden = false; }
   function fallback(reason) {
     msg(`<p>${esc(reason)}</p><a class="btn primary" href="https://www.youtube.com/watch?v=${esc(cur.v)}" target="_blank" rel="noopener">${ICON_FREE}Assistir no canal oficial</a>`);
@@ -1576,16 +1604,17 @@ const YTP = (() => {
   function load() {
     cur = src(); if (!cur) return;
     $("#ytmsg").hidden = true;
-    bar();
+    bar(); ccFor = null; ccBtn();
     ME.prog[it.id] = Object.assign({}, ME.prog[it.id] || {}, { ep, at: now() }); saveMe();
     if (FRAMED) { fallback("Dentro do Claude não dá para tocar vídeos de outro site. No app Android e no site do Sakuga o episódio toca aqui mesmo."); return; }
     api().then(() => {
       if (player && player.loadVideoById) { player.loadVideoById(cur.v); return; }
       player = new window.YT.Player("ytframe", {
         videoId: cur.v, host: "https://www.youtube-nocookie.com", width: "100%", height: "100%",
-        playerVars: { autoplay: 1, rel: 0, modestbranding: 1, playsinline: 1, hl: "pt", cc_lang_pref: "pt", iv_load_policy: 3, origin: location.origin },
+        playerVars: { autoplay: 1, rel: 0, modestbranding: 1, playsinline: 1, hl: "pt", cc_lang_pref: "pt", cc_load_policy: AUTOCC(cur.k) ? 1 : 0, iv_load_policy: 3, origin: location.origin },
         events: {
-          onStateChange: (e) => { if (e.data === 0) next(); },
+          onApiChange: () => { if (ccFor !== cur.v) applyCC(); },
+          onStateChange: (e) => { if (e.data === 1 && ccFor !== cur.v) setTimeout(applyCC, 600); if (e.data === 0) next(); },
           onError: (e) => fallback(e.data === 101 || e.data === 150 || e.data === 153 ? "O canal oficial só libera este episódio no próprio YouTube." : "Este episódio não está mais disponível no canal oficial."),
         },
       });
@@ -1626,6 +1655,7 @@ const YTP = (() => {
     const b = e.target.closest("button"); if (!b) return;
     if (b.id === "ytclose") close();
     else if (b.id === "ytfs") { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); else if (P.requestFullscreen) P.requestFullscreen().catch(() => toast("Tela cheia indisponível aqui")); }
+    else if (b.id === "ytcc") { ccOn = !ccOn; ccFor = null; applyCC(); ccBtn(); toast(ccOn ? "Legenda em português ligada" : "Legenda desligada"); }
     else if (b.dataset.ytk) { kind = b.dataset.ytk; ME.prefs.audio = kind; saveMe(); load(); }
     else if (b.dataset.yte) { save(); ep = Number(b.dataset.yte); kind = null; load(); }
   });
