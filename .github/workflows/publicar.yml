@@ -15,7 +15,7 @@ concurrency:
 jobs:
   apk:
     name: Gerar APK
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
@@ -24,17 +24,30 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - uses: android-actions/setup-android@v3
-
-      - uses: gradle/actions/setup-gradle@v4
+      - name: Conferir o Android SDK do runner
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls "$ANDROID_HOME/platforms" "$ANDROID_HOME/build-tools" | tail -20
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0" > /dev/null || true
 
       - name: Compilar APK assinado
         working-directory: android
         run: |
           chmod +x gradlew
-          ./gradlew --no-daemon assembleRelease
+          set -o pipefail
+          ./gradlew --no-daemon --stacktrace assembleRelease 2>&1 | tee ../build.log
           cp app/build/outputs/apk/release/app-release.apk ../sakuga.apk
           ls -la ../sakuga.apk
+
+      - name: Guardar o registro da compilação (para diagnóstico)
+        if: always()
+        run: |
+          [ -f build.log ] || echo "sem build.log (falhou antes da compilação)" > build.log
+          mkdir -p /tmp/log && cp build.log /tmp/log/ && cd /tmp/log
+          git init -q -b build-log && git config user.name "Sakuga Bot" && git config user.email "sakuga-bot@users.noreply.github.com"
+          git add -A && git commit -q -m "build ${{ github.run_number }}: ${{ job.status }}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" build-log
 
       - uses: actions/upload-artifact@v4
         with:
@@ -53,7 +66,7 @@ jobs:
     name: Publicar site (GitHub Pages)
     needs: apk
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
