@@ -810,6 +810,8 @@ const freeCount = (it) => freeEps(it).length;
 const freeSrc = (it) => (it.src || []).filter((s) => s && s.u);
 const hasFree = (it) => freeCount(it) > 0 || freeSrc(it).some((s) => regOk(s.reg));
 function freeNext(it) { const eps = freeEps(it); if (!eps.length) return null; const p = ME.prog[it.id]; const seen = new Set(ME.seen[it.id] || []); return (p && eps.includes(p.ep) && !seen.has(p.ep) ? p.ep : eps.find((n) => !seen.has(n))) || eps[0]; }
+const KLABEL = { dub: "Dublado", leg: "Legendado", en: "Legenda em inglês", orig: "Original" };
+const KLONG = { dub: "Dublado PT-BR", leg: "Legendado PT-BR", en: "Legendado em inglês", orig: "Áudio original" };
 const ICON_FREE = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
 
 /* ---------------- pôster gerado ---------------- */
@@ -1165,7 +1167,7 @@ function renderTitulo(id) {
   audio.push(["Áudio original", "Japonês" + (it.tp === "ONA" && /chin|donghua|quanzhi|douluo/i.test(it.r) ? " ou chinês" : "")]);
   audio.push(["Dublagem PT-BR", it.dub === 2 ? '<span class="pill dub">Disponível</span>' : it.dub === 1 ? '<span class="pill dubsoon">Anunciada, sem data</span>' : "Sem anúncio até agora"]);
   audio.push(["Legendas", hasLeg(it) ? "Português (BR)" : "PT-BR não confirmada"]);
-  audio.push(["Grátis no Sakuga", fe.length ? `${fe.length} episódio${fe.length > 1 ? "s" : ""} (${[...fk].map((k) => (k === "dub" ? "dublado" : "legendado")).join(" e ")})` : freeSrc(it).length ? "Nas plataformas grátis ao lado" : "Nenhum episódio oficial gratuito ainda"]);
+  audio.push(["Grátis no Sakuga", fe.length ? `${fe.length} episódio${fe.length > 1 ? "s" : ""} (${[...fk].map((k) => (KLONG[k] || k).toLowerCase()).join(", ")})` : freeSrc(it).length ? "Nas plataformas grátis ao lado" : "Nenhum episódio oficial gratuito ainda"]);
   const fich = [["Tipo", TYPE_LABEL[it.tp] || it.tp], ["Situação", statusText(it)], ["Episódios", it.st === "airing" && s && !s.weekly ? `${s.aired} de ${s.total || "?"}` : it.aired || it.eps || "—"], it.dur ? ["Duração", it.dur + " min" + (it.tp === "MOVIE" ? "" : " por episódio")] : null, ["Temporada", seasonText(it) || "—"], it.stu ? ["Estúdio", it.stu] : null, it.sc ? ["Nota média", it.sc.toFixed(1) + " / 10"] : null, ["Atualizado", it.upd ? ago(Date.parse(it.upd)) : "—"]].filter(Boolean);
   const links = [it.al && ["AniList", "https://anilist.co/anime/" + it.al], it.mal && ["MyAnimeList", "https://myanimelist.net/anime/" + it.mal], it.lc && ["LiveChart", "https://www.livechart.me/anime/" + it.lc]].filter(Boolean);
   const fam = ITEMS.filter((x) => x.fr === it.fr && x.id !== it.id).sort((a, b) => (a.y || 9999) - (b.y || 9999));
@@ -1265,7 +1267,7 @@ function epsHTML(it, s) {
     const p = ME.prog[it.id];
     const when = at ? (fut ? whenText(at) : fmtD.format(new Date(at))) : "";
     const mc = Media.peek(it), me = mc && mc.eps[n];
-    rows.push(`<div class="ep${fut ? " future" : ""}${nx ? " next" : ""}${seen.has(n) ? " seen" : ""}" data-n="${n}"><span class="thumb" style="--h:${(hueOf(it) + n * 9) % 360}"${!fut && (it.yt || {})[n] ? ` data-yt="1" role="button" tabindex="0" data-watch="${esc(it.id)}" data-ep="${n}"` : ""}><span class="no">${String(n).padStart(2, "0")}</span>${!fut && (it.yt || {})[n] && !NOIMG ? imgTag("https://i.ytimg.com/vi/" + it.yt[n][0].v + "/hqdefault.jpg", "", "Episódio " + n) : me && me.thumb && !fut ? imgTag(me.thumb, "", "Episódio " + n) : ""}${!fut && (it.yt || {})[n] ? '<span class="playov">' + ICON_FREE + "</span>" : ""}${p && p.ep === n && p.d ? `<i class="eprog" style="width:${Math.round(Math.min(1, p.t / p.d) * 100)}%"></i>` : ""}</span><span class="t"><b>${me && me.title ? `Episódio ${n} · ${esc(me.title)}` : `Episódio ${n}`}</b><span>${!fut && (it.yt || {})[n] ? '<i class="freetag">Grátis no Sakuga</i> · ' : ""}${fut ? (nx ? `Estreia ${esc(when)} · <span class="countdown" data-cd="${at}">${countdown(at)}</span>` : `Previsto ${esc(when)}`) : (when ? "Lançado em " + esc(when) : (it.yt || {})[n] ? "Toca aqui no Sakuga" : "Lançado · sem versão grátis oficial ainda")}${p && p.ep === n && p.d ? ` · parou em ${fmtClock(p.t)}` : ""}</span></span><span class="acts">${!fut && (it.yt || {})[n] ? (it.yt[n].map((v) => `<button class="btn sm ${v.k === "dub" ? "primary" : ""} epplay" data-watch="${esc(it.id)}" data-ep="${n}" data-kind="${v.k}" aria-label="Assistir episódio ${n} ${v.k === "dub" ? "dublado" : "legendado"}">${ICON_FREE}${v.k === "dub" ? "Dublado" : "Legendado"}</button>`).join("")) : ""}${fut ? "" : `<button class="check" data-seen="${esc(it.id)}" data-ep="${n}" aria-pressed="${seen.has(n)}" aria-label="Marcar episódio ${n} como assistido">${ICON.check}</button>`}</span></div>`);
+    rows.push(`<div class="ep${fut ? " future" : ""}${nx ? " next" : ""}${seen.has(n) ? " seen" : ""}" data-n="${n}"><span class="thumb" style="--h:${(hueOf(it) + n * 9) % 360}"${!fut && (it.yt || {})[n] ? ` data-yt="1" role="button" tabindex="0" data-watch="${esc(it.id)}" data-ep="${n}"` : ""}><span class="no">${String(n).padStart(2, "0")}</span>${!fut && (it.yt || {})[n] && !NOIMG ? imgTag("https://i.ytimg.com/vi/" + it.yt[n][0].v + "/hqdefault.jpg", "", "Episódio " + n) : me && me.thumb && !fut ? imgTag(me.thumb, "", "Episódio " + n) : ""}${!fut && (it.yt || {})[n] ? '<span class="playov">' + ICON_FREE + "</span>" : ""}${p && p.ep === n && p.d ? `<i class="eprog" style="width:${Math.round(Math.min(1, p.t / p.d) * 100)}%"></i>` : ""}</span><span class="t"><b>${me && me.title ? `Episódio ${n} · ${esc(me.title)}` : `Episódio ${n}`}</b><span>${!fut && (it.yt || {})[n] ? '<i class="freetag">Grátis no Sakuga</i> · ' : ""}${fut ? (nx ? `Estreia ${esc(when)} · <span class="countdown" data-cd="${at}">${countdown(at)}</span>` : `Previsto ${esc(when)}`) : (when ? "Lançado em " + esc(when) : (it.yt || {})[n] ? "Toca aqui no Sakuga" : "Lançado · sem versão grátis oficial ainda")}${p && p.ep === n && p.d ? ` · parou em ${fmtClock(p.t)}` : ""}</span></span><span class="acts">${!fut && (it.yt || {})[n] ? (it.yt[n].map((v) => `<button class="btn sm ${v.k === "dub" ? "primary" : ""} epplay" data-watch="${esc(it.id)}" data-ep="${n}" data-kind="${v.k}" aria-label="Assistir episódio ${n} ${(KLONG[v.k] || "").toLowerCase()}">${ICON_FREE}${KLABEL[v.k] || "Assistir"}</button>`).join("")) : ""}${fut ? "" : `<button class="check" data-seen="${esc(it.id)}" data-ep="${n}" aria-pressed="${seen.has(n)}" aria-label="Marcar episódio ${n} como assistido">${ICON.check}</button>`}</span></div>`);
   }
   const ranges = pages > 1 ? `<div class="ranges">${Array.from({ length: pages }, (_, i) => `<button class="chip" data-range="${i}" aria-pressed="${i === epRange}">${i * PAGE + 1}–${Math.min(total, (i + 1) * PAGE)}</button>`).join("")}</div>` : "";
   const fc = freeCount(it);
@@ -1555,13 +1557,15 @@ const YTP = (() => {
   function src() {
     const arr = (it.yt || {})[ep] || [];
     const want = kind || (ME.prefs.audio === "leg" ? "leg" : "dub");
-    return arr.find((v) => v.k === want) || arr[0] || null;
+    const order = [want, want === "dub" ? "leg" : "dub", "en", "orig"];
+    for (const k of order) { const f = arr.find((v) => v.k === k); if (f) return f; }
+    return arr[0] || null;
   }
   function bar() {
     $("#ytttl").textContent = it.t;
     const arr = (it.yt || {})[ep] || [];
-    $("#ytsub").textContent = `Episódio ${ep} · ${cur.k === "dub" ? "Dublado PT-BR" : "Legendado PT-BR"} · canal oficial ${cur.ch}`;
-    $("#ytaud").innerHTML = arr.length > 1 ? arr.map((v) => `<button data-ytk="${v.k}" aria-pressed="${v.k === cur.k}">${v.k === "dub" ? "Dublado" : "Legendado"}</button>`).join("") : "";
+    $("#ytsub").textContent = `Episódio ${ep} · ${KLONG[cur.k] || ""} · canal oficial ${cur.ch}`;
+    $("#ytaud").innerHTML = arr.length > 1 ? arr.map((v) => `<button data-ytk="${v.k}" aria-pressed="${v.k === cur.k}">${KLABEL[v.k] || v.k}</button>`).join("") : "";
     const eps = freeEps(it);
     $("#yteps").innerHTML = eps.length > 1 ? `<span>Episódios grátis</span>${eps.map((n) => `<button data-yte="${n}" aria-pressed="${n === ep}">EP ${n}</button>`).join("")}` : "";
   }
