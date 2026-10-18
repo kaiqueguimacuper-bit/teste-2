@@ -115,7 +115,7 @@ class MainActivity : Activity() {
                 fullCallback = callback
                 root.addView(view, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT))
                 web.visibility = View.GONE
-                setImmersive(true)
+                setFullscreenUi(true)
             }
 
             override fun onHideCustomView() {
@@ -124,7 +124,7 @@ class MainActivity : Activity() {
                 fullCallback?.onCustomViewHidden()
                 fullCallback = null
                 web.visibility = View.VISIBLE
-                setImmersive(false)
+                setFullscreenUi(false)
             }
         }
 
@@ -173,7 +173,7 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun setImmersive(on: Boolean) {
+    private fun setFullscreenUi(on: Boolean) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             val c = window.insetsController ?: return
             if (on) {
