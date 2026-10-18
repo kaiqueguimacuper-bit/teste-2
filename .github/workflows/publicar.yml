@@ -1,0 +1,88 @@
+name: Publicar Sakuga (site + APK)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publicar-sakuga
+  cancel-in-progress: false
+
+jobs:
+  apk:
+    name: Gerar APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Compilar APK assinado
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleRelease
+          cp app/build/outputs/apk/release/app-release.apk ../sakuga.apk
+          ls -la ../sakuga.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sakuga-apk
+          path: sakuga.apk
+
+      - name: Atualizar a versão "apk-latest" (Releases)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view apk-latest >/dev/null 2>&1 || gh release create apk-latest --title "Sakuga para Android" --notes "APK mais recente do Sakuga. Baixe sakuga.apk e instale no celular."
+          gh release upload apk-latest sakuga.apk --clobber
+          gh release edit apk-latest --notes "APK mais recente do Sakuga (build ${{ github.run_number }}, $(date -u +%d/%m/%Y\ %H:%M) UTC). Baixe sakuga.apk e instale no celular."
+
+  site:
+    name: Publicar site (GitHub Pages)
+    needs: apk
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Baixar o APK desta execução
+        if: needs.apk.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: sakuga-apk
+          path: apk
+
+      - name: Usar o último APK publicado se a compilação falhou
+        if: needs.apk.result != 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p apk
+          gh release download apk-latest -p sakuga.apk -D apk || echo "ainda não há APK publicado"
+
+      - name: Montar e enviar a branch gh-pages
+        run: |
+          mkdir -p public
+          cp -r site/. public/
+          [ -f apk/sakuga.apk ] && cp apk/sakuga.apk public/sakuga.apk || true
+          touch public/.nojekyll
+          cd public
+          git init -q -b gh-pages
+          git config user.name "Sakuga Bot"
+          git config user.email "sakuga-bot@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Site do Sakuga — build ${{ github.run_number }}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" gh-pages
+          echo "Publicado em https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"
