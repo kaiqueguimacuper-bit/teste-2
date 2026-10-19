@@ -719,7 +719,32 @@ async function boot() {
   } catch { /* sem arquivo: o banco preenche */ }
   if (!ITEMS.length) rerender();
   initDb();
+  if (!FRAMED) {
+    remoteRefresh(false);
+    setInterval(() => remoteRefresh(true), 20 * 60 * 1000);
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") remoteRefresh(true); });
+  }
   setInterval(() => { renderSync(); if (view === "calendario") renderCalendario(); tickCountdowns(); }, 30000);
+}
+
+// Fora do Claude (site e app Android) o catálogo novo vem direto do GitHub, assim que o agente publica: sem baixar APK.
+const REMOTE_CATALOG = "https://raw.githubusercontent.com/kaiqueguimacuper-bit/teste-2/main/site/catalog.json";
+let lastRemote = 0;
+async function remoteRefresh(announce) {
+  if (Date.now() - lastRemote < 60000) return;
+  lastRemote = Date.now();
+  try {
+    const r = await fetch(REMOTE_CATALOG + "?t=" + Math.floor(Date.now() / 300000), { cache: "no-store" });
+    if (!r.ok) return;
+    const j = await r.json();
+    const gen = (j.status && j.status.lastRun) || "";
+    if (!Array.isArray(j.items) || j.items.length < 50 || !gen || (FILE_GEN && gen <= FILE_GEN)) return;
+    FILE_GEN = gen;
+    applyItems(j.items, "arquivo");
+    applyFeed({ items: j.feed || [] });
+    applyStatus(j.status);
+    if (announce) toast("Catálogo atualizado com as novidades");
+  } catch { /* sem internet: fica com o que já tem */ }
 }
 
 async function initDb() {

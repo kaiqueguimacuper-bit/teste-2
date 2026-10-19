@@ -25,10 +25,15 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.FrameLayout
 import androidx.webkit.WebViewAssetLoader
+import java.io.File
+import java.net.HttpURLConnection
+import java.net.URL
 
 /**
- * Sakuga para Android: abre o site publicado no GitHub Pages (sempre atualizado pelo agente)
- * e, sem internet, abre a cópia que vem dentro do APK.
+ * Sakuga para Android. A cada abertura (e a cada volta ao app) baixa do GitHub a versão mais nova
+ * do app e do catálogo que o agente publica de 12 em 12 horas, e guarda no aparelho.
+ * Assim tudo se atualiza sozinho, sem instalar outro APK. Sem internet, abre a última cópia guardada
+ * (ou a que vem dentro do APK).
  */
 class MainActivity : Activity() {
 
@@ -41,11 +46,15 @@ class MainActivity : Activity() {
 
     private val remoteUrl = BuildConfig.SITE_URL
     private val remoteHost = Uri.parse(BuildConfig.SITE_URL).host ?: ""
-    private val localUrl = "https://appassets.androidplatform.net/assets/site/index.html"
+    private val bundledUrl = "https://appassets.androidplatform.net/assets/site/index.html"
+    private val updatedUrl = "https://appassets.androidplatform.net/novo/index.html"
+    private val siteDir by lazy { File(filesDir, "site").apply { mkdirs() } }
+    private var lastCheck = 0L
 
     private val assetLoader by lazy {
         WebViewAssetLoader.Builder()
             .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this))
+            .addPathHandler("/novo/", WebViewAssetLoader.InternalStoragePathHandler(this, siteDir))
             .build()
     }
 
@@ -91,11 +100,11 @@ class MainActivity : Activity() {
             }
 
             override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
-                if (request.isForMainFrame && !usingLocal) loadLocal()
+                if (request.isForMainFrame && request.url.path?.startsWith("/novo/") == true) view.loadUrl(bundledUrl)
             }
 
             override fun onReceivedHttpError(view: WebView, request: WebResourceRequest, errorResponse: WebResourceResponse) {
-                if (request.isForMainFrame && !usingLocal && errorResponse.statusCode >= 400) loadLocal()
+                if (request.isForMainFrame && errorResponse.statusCode >= 400 && request.url.path?.startsWith("/novo/") == true) view.loadUrl(bundledUrl)
             }
         }
 
@@ -134,16 +143,68 @@ class MainActivity : Activity() {
 
         if (savedInstanceState != null) {
             web.restoreState(savedInstanceState)
-        } else if (isOnline()) {
-            web.loadUrl(remoteUrl)
         } else {
             loadLocal()
         }
+        checkUpdates()
     }
+
+    override fun onResume() {
+        super.onResume()
+        if (System.currentTimeMillis() - lastCheck > 30 * 60 * 1000L) checkUpdates()
+    }
+
+    private fun hasUpdated(): Boolean = File(siteDir, "index.html").length() > 20_000 && File(siteDir, "catalog.json").length() > 20_000
 
     private fun loadLocal() {
         usingLocal = true
-        web.loadUrl(localUrl)
+        web.loadUrl(if (hasUpdated()) updatedUrl else bundledUrl)
+    }
+
+    /** Baixa index.html e catalog.json novos do GitHub (em segundo plano) e troca os guardados se mudaram. */
+    private fun checkUpdates() {
+        lastCheck = System.currentTimeMillis()
+        if (!isOnline()) return
+        Thread {
+            try {
+                val stamp = System.currentTimeMillis() / 300_000
+                val html = download("$RAW/index.html?t=$stamp")
+                val cat = download("$RAW/catalog.json?t=$stamp")
+                if (html == null || cat == null) return@Thread
+                val htmlOk = html.size > 20_000 && String(html, 0, 2000, Charsets.UTF_8).contains("<html", ignoreCase = true)
+                val catOk = cat.size > 20_000 && cat[0] == '{'.code.toByte() && String(cat, Charsets.UTF_8).contains("\"items\"")
+                if (!htmlOk || !catOk) return@Thread
+                val firstTime = !hasUpdated()
+                val oldHtml = File(siteDir, "index.html").takeIf { it.exists() }?.readBytes()
+                write("catalog.json", cat)
+                write("index.html", html)
+                val codeChanged = oldHtml == null || !oldHtml.contentEquals(html)
+                // primeira atualização: troca já para a versão nova; depois, o app novo entra na próxima abertura
+                // (o catálogo novo o próprio app já busca sozinho enquanto está aberto)
+                if (firstTime && codeChanged) runOnUiThread { if (fullView == null) web.loadUrl(updatedUrl) }
+            } catch (e: Exception) {
+                // sem rede ou GitHub fora: continua com a cópia guardada
+            }
+        }.start()
+    }
+
+    private fun download(url: String): ByteArray? {
+        val c = URL(url).openConnection() as HttpURLConnection
+        return try {
+            c.connectTimeout = 10_000
+            c.readTimeout = 20_000
+            c.useCaches = false
+            c.setRequestProperty("Cache-Control", "no-cache")
+            if (c.responseCode != 200) null else c.inputStream.use { it.readBytes() }
+        } finally {
+            c.disconnect()
+        }
+    }
+
+    private fun write(name: String, data: ByteArray) {
+        val tmp = File(siteDir, "$name.tmp")
+        tmp.writeBytes(data)
+        if (!tmp.renameTo(File(siteDir, name))) { File(siteDir, name).writeBytes(data); tmp.delete() }
     }
 
     private fun openOutside(url: Uri) {
@@ -243,6 +304,7 @@ class MainActivity : Activity() {
 
     companion object {
         private const val REQ_FILE = 4021
+        private const val RAW = "https://raw.githubusercontent.com/kaiqueguimacuper-bit/teste-2/main/site"
         private val BG = Color.parseColor("#12132A")
     }
 }
