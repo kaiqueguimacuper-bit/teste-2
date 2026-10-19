@@ -684,10 +684,25 @@ const imgTag = (src, cls = "", alt = "") => `<img class="${cls}" src="${esc(src)
 function applyItems(items, source) {
   if (!Array.isArray(items) || !items.length) return;
   ITEMS = items.filter((x) => x && x.id);
+  pruneExpired(ITEMS);
   BY = new Map(ITEMS.map((x) => [x.id, x]));
   SOURCE = source;
   rerender();
 }
+// vídeos e plataformas com data de saída ("ate", AAAA-MM-DD) somem sozinhos depois do prazo
+function pruneExpired(list) {
+  const today = new Date().toISOString().slice(0, 10);
+  const ok = (v) => !v || !v.ate || v.ate >= today;
+  for (const it of list) {
+    if (it.yt && typeof it.yt === "object") {
+      const yt = {};
+      for (const [n, arr] of Object.entries(it.yt)) { const keep = (arr || []).filter(ok); if (keep.length) yt[n] = keep; }
+      it.yt = yt;
+    }
+    if (Array.isArray(it.src)) it.src = it.src.filter(ok);
+  }
+}
+const fmtAte = (d) => (d ? d.slice(8, 10) + "/" + d.slice(5, 7) : "");
 function applyFeed(f) { if (f && Array.isArray(f.items)) { FEED = f.items; if (view === "novidades" || view === "inicio") rerender(); } }
 function applyStatus(s) { if (s) { STATUS = s; renderSync(); if (view === "novidades") renderNovidades(); } }
 
@@ -1272,7 +1287,7 @@ function epsHTML(it, s) {
     const p = ME.prog[it.id];
     const when = at ? (fut ? whenText(at) : fmtD.format(new Date(at))) : "";
     const mc = Media.peek(it), me = mc && mc.eps[n];
-    rows.push(`<div class="ep${fut ? " future" : ""}${nx ? " next" : ""}${seen.has(n) ? " seen" : ""}" data-n="${n}"><span class="thumb" style="--h:${(hueOf(it) + n * 9) % 360}"${!fut && (it.yt || {})[n] ? ` data-yt="1" role="button" tabindex="0" data-watch="${esc(it.id)}" data-ep="${n}"` : ""}><span class="no">${String(n).padStart(2, "0")}</span>${!fut && (it.yt || {})[n] && !NOIMG ? imgTag("https://i.ytimg.com/vi/" + it.yt[n][0].v + "/hqdefault.jpg", "", "Episódio " + n) : me && me.thumb && !fut ? imgTag(me.thumb, "", "Episódio " + n) : ""}${!fut && (it.yt || {})[n] ? '<span class="playov">' + ICON_FREE + "</span>" : ""}${p && p.ep === n && p.d ? `<i class="eprog" style="width:${Math.round(Math.min(1, p.t / p.d) * 100)}%"></i>` : ""}</span><span class="t"><b>${me && me.title ? `Episódio ${n} · ${esc(me.title)}` : `Episódio ${n}`}</b><span>${!fut && (it.yt || {})[n] ? '<i class="freetag">Grátis no Sakuga</i> · ' : ""}${fut ? (nx ? `Estreia ${esc(when)} · <span class="countdown" data-cd="${at}">${countdown(at)}</span>` : `Previsto ${esc(when)}`) : (when ? "Lançado em " + esc(when) : (it.yt || {})[n] ? "Toca aqui no Sakuga" : "Lançado · sem versão grátis oficial ainda")}${p && p.ep === n && p.d ? ` · parou em ${fmtClock(p.t)}` : ""}</span></span><span class="acts">${!fut && (it.yt || {})[n] ? (it.yt[n].map((v) => `<button class="btn sm ${v.k === "dub" ? "primary" : ""} epplay" data-watch="${esc(it.id)}" data-ep="${n}" data-kind="${v.k}" aria-label="Assistir episódio ${n} ${(KLONG[v.k] || "").toLowerCase()}">${ICON_FREE}${KLABEL[v.k] || "Assistir"}</button>`).join("")) : ""}${fut ? "" : `<button class="check" data-seen="${esc(it.id)}" data-ep="${n}" aria-pressed="${seen.has(n)}" aria-label="Marcar episódio ${n} como assistido">${ICON.check}</button>`}</span></div>`);
+    rows.push(`<div class="ep${fut ? " future" : ""}${nx ? " next" : ""}${seen.has(n) ? " seen" : ""}" data-n="${n}"><span class="thumb" style="--h:${(hueOf(it) + n * 9) % 360}"${!fut && (it.yt || {})[n] ? ` data-yt="1" role="button" tabindex="0" data-watch="${esc(it.id)}" data-ep="${n}"` : ""}><span class="no">${String(n).padStart(2, "0")}</span>${!fut && (it.yt || {})[n] && !NOIMG ? imgTag("https://i.ytimg.com/vi/" + it.yt[n][0].v + "/hqdefault.jpg", "", "Episódio " + n) : me && me.thumb && !fut ? imgTag(me.thumb, "", "Episódio " + n) : ""}${!fut && (it.yt || {})[n] ? '<span class="playov">' + ICON_FREE + "</span>" : ""}${p && p.ep === n && p.d ? `<i class="eprog" style="width:${Math.round(Math.min(1, p.t / p.d) * 100)}%"></i>` : ""}</span><span class="t"><b>${me && me.title ? `Episódio ${n} · ${esc(me.title)}` : `Episódio ${n}`}</b><span>${!fut && (it.yt || {})[n] ? '<i class="freetag">Grátis no Sakuga</i> · ' + (it.yt[n][0].x ? "vídeo com os eps " + esc(it.yt[n][0].x) + " · " : "") + (it.yt[n][0].ate ? "até " + fmtAte(it.yt[n][0].ate) + " · " : "") : ""}${fut ? (nx ? `Estreia ${esc(when)} · <span class="countdown" data-cd="${at}">${countdown(at)}</span>` : `Previsto ${esc(when)}`) : (when ? "Lançado em " + esc(when) : (it.yt || {})[n] ? "Toca aqui no Sakuga" : "Lançado · sem versão grátis oficial ainda")}${p && p.ep === n && p.d ? ` · parou em ${fmtClock(p.t)}` : ""}</span></span><span class="acts">${!fut && (it.yt || {})[n] ? (it.yt[n].map((v) => `<button class="btn sm ${v.k === "dub" ? "primary" : ""} epplay" data-watch="${esc(it.id)}" data-ep="${n}" data-kind="${v.k}" aria-label="Assistir episódio ${n} ${(KLONG[v.k] || "").toLowerCase()}">${ICON_FREE}${KLABEL[v.k] || "Assistir"}</button>`).join("")) : ""}${fut ? "" : `<button class="check" data-seen="${esc(it.id)}" data-ep="${n}" aria-pressed="${seen.has(n)}" aria-label="Marcar episódio ${n} como assistido">${ICON.check}</button>`}</span></div>`);
   }
   const ranges = pages > 1 ? `<div class="ranges">${Array.from({ length: pages }, (_, i) => `<button class="chip" data-range="${i}" aria-pressed="${i === epRange}">${i * PAGE + 1}–${Math.min(total, (i + 1) * PAGE)}</button>`).join("")}</div>` : "";
   const fc = freeCount(it);
@@ -1569,7 +1584,7 @@ const YTP = (() => {
   function bar() {
     $("#ytttl").textContent = it.t;
     const arr = (it.yt || {})[ep] || [];
-    $("#ytsub").textContent = `Episódio ${ep} · ${KLONG[cur.k] || ""} · canal oficial ${cur.ch}`;
+    $("#ytsub").textContent = `${cur.x ? "Episódios " + cur.x + " (vídeo único)" : "Episódio " + ep} · ${KLONG[cur.k] || ""} · canal oficial ${cur.ch}${cur.ate ? " · grátis até " + fmtAte(cur.ate) : ""}`;
     $("#ytaud").innerHTML = arr.length > 1 ? arr.map((v) => `<button data-ytk="${v.k}" aria-pressed="${v.k === cur.k}">${KLABEL[v.k] || v.k}</button>`).join("") : "";
     const eps = freeEps(it);
     $("#yteps").innerHTML = eps.length > 1 ? `<span>Episódios grátis</span>${eps.map((n) => `<button data-yte="${n}" aria-pressed="${n === ep}">EP ${n}</button>`).join("")}` : "";

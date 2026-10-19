@@ -2,7 +2,8 @@
 """Junta os achados dos subagentes num patch para o sakuga_agent.py, somando ao que já existe (sem apagar nada).
 Uso: python3 juntar_achados.py <pasta_baixada> <pasta_achados> <saida_patch.json> [patch_extra.json]
 Cada arquivo <pasta_achados>/*.json é uma lista de itens:
-  episódio:  {"id": "<id do catálogo, se souber>", "anime": "<nome>", "ep": 3, "v": "<id do vídeo YouTube>", "ch": "<canal>", "k": "dub|leg|ja|en|orig"}
+  episódio:  {"id": "<id do catálogo, se souber>", "anime": "<nome>", "ep": 3, "v": "<id do vídeo YouTube>", "ch": "<canal>", "k": "dub|leg|ja|en|orig", "reg": "" ou "JP", "note": "grátis até 23/10/2026" | "vídeo único com os eps 1-26"}
+  (a data "até dd/mm/aaaa" vira "ate" e o vídeo some sozinho depois; "vídeo único com os eps X-Y" vira "x")
   plataforma:{"id": "...", "anime": "<nome>", "p": "pluto|bilibili|...", "u": "<url>", "reg": "BR|LATAM|GLOBAL|JP|CN|KR|US|ASIA", "lang": "...", "eps": "1-12", "note": "..."}
   título novo (opcional, junto de qualquer um acima): "novo": {"id": "m<MAL>"|"n-<slug>", "t": "...", "tp": "TV|MOVIE|ONA", "st": "...", "y": 2026, "al": ..., "kt": ..., "mal": ..., "g": [...]}
 patch_extra.json (opcional): patch do próprio agente (horários, dublagens, sinopses...), que é mesclado junto."""
@@ -78,6 +79,13 @@ for f in sorted(glob.glob(os.path.join(ach_dir, "*.json"))):
             skipped.append(a.get("anime"))
             continue
         o = cur_of(iid)
+        note = str(a.get("note") or "")
+        mm = re.search(r"até\s*(\d{1,2})/(\d{1,2})/(\d{4})", note)
+        ate = f"{mm.group(3)}-{int(mm.group(2)):02d}-{int(mm.group(1)):02d}" if mm else None
+        mr = re.search(r"eps?\.?\s*(\d+)\s*[–-]\s*(\d+)", note) if "vídeo único" in note else None
+        if a.get("v") and (a.get("reg") or "").upper() in ("JP", "ASIA", "US", "CN", "KR"):
+            a = dict(a, u="https://www.youtube.com/watch?v=" + a["v"], p="yt", eps=str(a.get("ep") or ""), note="Canal oficial " + (a.get("ch") or "") + (" · " + note if note else ""))
+            a.pop("v")
         if a.get("v"):
             try:
                 ep = str(int(a.get("ep") or 1))
@@ -86,7 +94,10 @@ for f in sorted(glob.glob(os.path.join(ach_dir, "*.json"))):
             arr = o["yt"].setdefault(ep, [])
             if any(x.get("v") == a["v"] for x in arr):
                 continue
-            arr.append({"v": a["v"], "ch": a.get("ch") or "Canal oficial", "k": a.get("k") or "leg"})
+            e = {"v": a["v"], "ch": a.get("ch") or "Canal oficial", "k": a.get("k") or "leg"}
+            if ate: e["ate"] = ate
+            if mr and mr.group(1) != mr.group(2): e["x"] = f"{mr.group(1)}–{mr.group(2)}"
+            arr.append(e)
             n_yt += 1
             feed_eps.setdefault(iid, set()).add(int(ep))
         elif a.get("u"):
@@ -95,6 +106,7 @@ for f in sorted(glob.glob(os.path.join(ach_dir, "*.json"))):
             s = {"p": a.get("p") or "other", "u": a["u"], "reg": a.get("reg") or "", "lang": a.get("lang") or ""}
             if a.get("eps"): s["eps"] = a["eps"]
             if a.get("note"): s["note"] = a["note"]
+            if ate: s["ate"] = ate
             o["src"].append(s)
             n_src += 1
 

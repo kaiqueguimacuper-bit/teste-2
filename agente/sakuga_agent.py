@@ -74,6 +74,24 @@ for p in patch.get("items", []):
         items[p["id"]] = base
     items[p["id"]]["upd"] = NOW
     changed += 1
+# tira vídeos e plataformas cuja data de saída ("ate") já passou
+TODAY = NOW[:10]
+expired = 0
+for it in items.values():
+    yt = it.get("yt")
+    if isinstance(yt, dict):
+        for ep in list(yt):
+            keep = [v for v in yt[ep] if not v.get("ate") or v["ate"] >= TODAY]
+            expired += len(yt[ep]) - len(keep)
+            if keep: yt[ep] = keep
+            else: yt.pop(ep)
+        if not yt: it.pop("yt")
+    if isinstance(it.get("src"), list):
+        keep = [x for x in it["src"] if not x.get("ate") or x["ate"] >= TODAY]
+        expired += len(it["src"]) - len(keep)
+        it["src"] = keep
+if expired:
+    print("vídeos/plataformas expirados removidos:", expired, file=sys.stderr)
 for rid in patch.get("remove", []):
     if items.pop(rid, None):
         changed += 1
