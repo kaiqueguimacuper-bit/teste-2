@@ -149,11 +149,6 @@ class MainActivity : Activity() {
         checkUpdates()
     }
 
-    override fun onResume() {
-        super.onResume()
-        if (System.currentTimeMillis() - lastCheck > 30 * 60 * 1000L) checkUpdates()
-    }
-
     private fun hasUpdated(): Boolean = File(siteDir, "index.html").length() > 20_000 && File(siteDir, "catalog.json").length() > 20_000
 
     private fun loadLocal() {
@@ -294,6 +289,7 @@ class MainActivity : Activity() {
     override fun onResume() {
         super.onResume()
         web.onResume()
+        if (lastCheck > 0 && System.currentTimeMillis() - lastCheck > 30 * 60 * 1000L) checkUpdates()
     }
 
     override fun onDestroy() {
