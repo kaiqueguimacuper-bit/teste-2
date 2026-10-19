@@ -1,0 +1,1709 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sakuga</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="Sakuga: streaming de anime com calendário de episódios, dublagens PT-BR, legendas e onde assistir, atualizado a cada 12 horas.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>/* Layout: app de streaming com barra superior fixa, conteúdo em faixas horizontais (carrosséis) e barra inferior no celular.
+   Identidade: índigo "sumi" profundo + rosa sakura de destaque + âmbar para episódio novo; pôsteres tipográficos com retícula de mangá. */
+:root {
+  --bg: #12132a;
+  --bg-2: #1a1c38;
+  --bg-3: #24274b;
+  --line: rgba(205, 200, 255, .12);
+  --fg: #eeebf7;
+  --muted: #a3a0c2;
+  --accent: #ff4d8d;
+  --accent-ink: #ffffff;
+  --new: #ffb23e;
+  --ok: #3ddc97;
+  --info: #7cc4ff;
+  --scrim: rgba(10, 10, 26, .72);
+  --card-shadow: 0 10px 30px rgba(4, 4, 18, .45);
+  --display: "Dela Gothic One", "Arial Black", "Helvetica Neue", Impact, sans-serif;
+  --body: "Zen Kaku Gothic New", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --r-s: 8px; --r-m: 14px; --r-l: 22px;
+  --gut: max(16px, env(safe-area-inset-left, 0px));
+  --gut-r: max(16px, env(safe-area-inset-right, 0px));
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f3f2f9; --bg-2: #ffffff; --bg-3: #e7e5f3; --line: rgba(40, 30, 90, .12);
+    --fg: #191736; --muted: #5d5a7e; --accent: #e3266d; --accent-ink: #ffffff; --new: #b86a00;
+    --ok: #0d8a5a; --info: #1a6fb8; --scrim: rgba(243, 242, 249, .82); --card-shadow: 0 10px 26px rgba(40, 30, 90, .14);
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #f3f2f9; --bg-2: #ffffff; --bg-3: #e7e5f3; --line: rgba(40, 30, 90, .12);
+  --fg: #191736; --muted: #5d5a7e; --accent: #e3266d; --accent-ink: #ffffff; --new: #b86a00;
+  --ok: #0d8a5a; --info: #1a6fb8; --scrim: rgba(243, 242, 249, .82); --card-shadow: 0 10px 26px rgba(40, 30, 90, .14);
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { background: var(--bg); color: var(--fg); }
+body { font-family: var(--body); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 60; background: var(--bg); }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 6px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ---------- barra superior ---------- */
+.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50;
+  display: flex; align-items: center; gap: 18px;
+  padding-block: 12px; padding-left: var(--gut); padding-right: var(--gut-r);
+  background: linear-gradient(var(--bg), color-mix(in srgb, var(--bg) 88%, transparent));
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line);
+}
+.logo { display: flex; align-items: baseline; gap: 8px; text-decoration: none; flex: none; background: none; border: 0; padding: 0; }
+.logo b { font-family: var(--display); font-weight: 400; font-size: 23px; letter-spacing: .02em; line-height: 1; }
+.logo b i { font-style: normal; color: var(--accent); }
+.logo small { font-size: 11px; color: var(--muted); letter-spacing: .04em; }
+.nav { display: flex; gap: 4px; }
+.nav button { background: none; border: 0; padding: 8px 12px; border-radius: 999px; color: var(--muted); font-weight: 500; }
+.nav button[aria-current="page"] { color: var(--fg); background: var(--bg-3); }
+.nav button:hover { color: var(--fg); }
+.top .spacer { flex: 1; }
+.searchbox { display: flex; align-items: center; gap: 8px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; width: min(300px, 32vw); }
+.searchbox input { border: 0; background: none; outline: none; width: 100%; min-width: 0; }
+.iconbtn { display: inline-grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg-2); flex: none; }
+.iconbtn svg, .btn svg, .tab svg { width: 18px; height: 18px; }
+.sync { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); white-space: nowrap; background: none; border: 0; padding: 0; }
+.sync .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ok) 22%, transparent); }
+
+/* ---------- barra inferior (celular) ---------- */
+.tabs { display: none; }
+@media (max-width: 820px) {
+  .nav, .searchbox, .sync .txt { display: none; }
+  .top { gap: 10px; }
+  .tabs {
+    display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; inset: auto 0 0 0; z-index: 55;
+    padding: 6px max(8px, env(safe-area-inset-right, 0px)) calc(6px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px));
+    background: color-mix(in srgb, var(--bg-2) 94%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid var(--line);
+  }
+  .tab { display: grid; justify-items: center; gap: 2px; background: none; border: 0; padding: 6px 2px; color: var(--muted); font-size: 11px; }
+  .tab[aria-current="page"] { color: var(--accent); }
+  main { padding-bottom: 86px; }
+}
+@media (min-width: 821px) { .only-m { display: none !important; } }
+
+/* ---------- estrutura ---------- */
+main { min-height: 70vh; }
+.view[hidden] { display: none !important; }
+.wrap { padding-left: var(--gut); padding-right: var(--gut-r); }
+.section { padding-block: 14px 6px; }
+.sec-h { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.sec-h h2 { font-family: var(--display); font-weight: 400; font-size: clamp(18px, 2.2vw, 23px); letter-spacing: .01em; }
+.sec-h p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.sec-h .more { background: none; border: 0; color: var(--muted); font-size: 13px; white-space: nowrap; padding: 4px 0; }
+.sec-h .more:hover { color: var(--fg); }
+
+/* ---------- hero ---------- */
+.hero { position: relative; margin: 14px var(--gut-r) 8px var(--gut); border-radius: var(--r-l); overflow: hidden; min-height: 400px; display: grid; isolation: isolate; box-shadow: var(--card-shadow); }
+.hero .art { position: absolute; inset: 0; z-index: -1; }
+.hero .art .pt, .hero .art .tl, .dhead .art .pt, .dhead .art .tl { display: none; }
+.hero .art .big, .dhead .art .big { font-size: min(52vw, 520px); right: 2%; top: -6%; -webkit-text-stroke-width: 3px; }
+.hero .shade { position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(8, 8, 24, .92) 0%, rgba(8, 8, 24, .6) 45%, rgba(8, 8, 24, .05) 80%), linear-gradient(0deg, rgba(8, 8, 24, .7), transparent 50%); }
+.hero .in { align-self: end; padding: clamp(22px, 4vw, 48px); max-width: 640px; color: #fff; display: grid; gap: 12px; }
+.hero h1 { font-family: var(--display); font-weight: 400; font-size: clamp(28px, 4.6vw, 54px); line-height: 1.02; }
+.hero .syn { color: rgba(255, 255, 255, .84); max-width: 58ch; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.hero .meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 13px; color: rgba(255, 255, 255, .8); }
+.hero .ctas { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+.hero .pager { position: absolute; right: clamp(16px, 3vw, 32px); bottom: clamp(16px, 3vw, 32px); display: flex; gap: 6px; }
+.hero .pager button { width: 26px; height: 5px; border-radius: 3px; border: 0; background: rgba(255, 255, 255, .35); padding: 0; }
+.hero .pager button[aria-current="true"] { background: #fff; width: 40px; }
+.hero .nextep { display: inline-flex; gap: 10px; align-items: center; background: rgba(255, 255, 255, .1); border: 1px solid rgba(255, 255, 255, .18); padding: 8px 12px; border-radius: 12px; width: fit-content; font-size: 13px; }
+.hero .nextep b { color: #ffb23e; font-weight: 700; }
+@media (max-width: 640px) { .hero { min-height: 470px; } .hero .in { padding-bottom: 44px; } .hero .pager { top: auto !important; bottom: 18px !important; left: 50%; right: auto; transform: translateX(-50%); } .hero .shade { background: linear-gradient(0deg, rgba(8, 8, 24, .95) 0%, rgba(8, 8, 24, .55) 55%, rgba(8, 8, 24, .1) 100%); } .hero .pager { top: 16px; bottom: auto; } }
+
+/* ---------- botões e selos ---------- */
+.btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; padding: 10px 18px; border: 1px solid var(--line); background: var(--bg-3); font-weight: 700; font-size: 14px; text-decoration: none; white-space: nowrap; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.btn.ghost { background: rgba(255, 255, 255, .12); color: #fff; border-color: rgba(255, 255, 255, .22); }
+.btn.sm { padding: 7px 12px; font-size: 13px; }
+.btn:hover { filter: brightness(1.08); }
+.pill { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 2px 9px; font-size: 11.5px; font-weight: 700; letter-spacing: .02em; white-space: nowrap; border: 1px solid transparent; }
+.pill.dub { background: color-mix(in srgb, var(--ok) 18%, transparent); color: var(--ok); border-color: color-mix(in srgb, var(--ok) 40%, transparent); }
+.pill.dubsoon { background: color-mix(in srgb, var(--info) 15%, transparent); color: var(--info); border-color: color-mix(in srgb, var(--info) 38%, transparent); }
+.pill.leg { background: var(--bg-3); color: var(--muted); border-color: var(--line); }
+.pill.new { background: var(--new); color: #1b1300; }
+.pill.live { background: var(--accent); color: var(--accent-ink); }
+.pill.soft { background: var(--bg-3); color: var(--fg); }
+.hero .pill.leg, .hero .pill.soft { background: rgba(255, 255, 255, .14); color: #fff; border-color: transparent; }
+
+/* ---------- carrossel ---------- */
+.row { position: relative; }
+.rail { display: grid; grid-auto-flow: column; grid-auto-columns: clamp(132px, 15.5vw, 186px); gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-left: var(--gut); padding: 4px var(--gut-r) 14px var(--gut); scrollbar-width: none; }
+.rail::-webkit-scrollbar { display: none; }
+.rail.wide { grid-auto-columns: clamp(250px, 27vw, 330px); }
+.rail.ranked { grid-auto-columns: clamp(176px, 20vw, 236px); }
+.rail > * { scroll-snap-align: start; min-width: 0; }
+.row .arrow { position: absolute; top: 38%; z-index: 3; width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg-2); box-shadow: var(--card-shadow); display: grid; place-items: center; opacity: 0; transition: opacity .2s; }
+.row:hover .arrow { opacity: 1; }
+.row .arrow.l { left: 8px; } .row .arrow.r { right: 8px; }
+@media (hover: none) { .row .arrow { display: none; } }
+
+/* ---------- cartão / pôster ---------- */
+.card { display: grid; gap: 8px; background: none; border: 0; padding: 0; text-align: left; min-width: 0; }
+.card .cap { display: grid; gap: 2px; min-width: 0; }
+.card .cap b { font-weight: 700; font-size: 13.5px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.card .cap span { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card:hover .poster { transform: translateY(-3px); box-shadow: 0 16px 34px rgba(4, 4, 18, .5); }
+.poster {
+  --h: 330; position: relative; aspect-ratio: 2 / 3; width: 100%; max-width: 100%; border-radius: var(--r-m); overflow: hidden; isolation: isolate;
+  background:
+    radial-gradient(120% 80% at 85% 10%, hsl(calc(var(--h) + 25) 85% 62% / .9), transparent 55%),
+    linear-gradient(165deg, hsl(var(--h) 72% 46%), hsl(calc(var(--h) + 38) 70% 16%) 78%);
+  color: #fff; transition: transform .25s ease, box-shadow .25s ease; box-shadow: 0 6px 18px rgba(4, 4, 18, .3);
+}
+.poster::before { /* retícula de mangá */
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  background-image: radial-gradient(circle, rgba(255, 255, 255, .28) 1.1px, transparent 1.5px); background-size: 7px 7px;
+  -webkit-mask-image: linear-gradient(205deg, #000 0%, transparent 62%); mask-image: linear-gradient(205deg, #000 0%, transparent 62%);
+}
+.poster::after { /* linhas de velocidade */
+  content: ""; position: absolute; inset: -30%; z-index: -1; opacity: .5;
+  background: repeating-conic-gradient(from 0deg at 78% 22%, rgba(255, 255, 255, .09) 0deg 1.2deg, transparent 1.2deg 7deg);
+}
+.poster .big { position: absolute; right: -6%; top: 2%; z-index: -1; font-family: var(--display); font-size: 9em; line-height: .8; color: transparent; -webkit-text-stroke: 2px rgba(255, 255, 255, .28); }
+.poster .pt { position: absolute; left: 10px; right: 10px; bottom: 10px; font-family: var(--display); font-weight: 400; line-height: 1.04; text-shadow: 0 2px 10px rgba(0, 0, 0, .35); display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; font-size: 19px; }
+.poster .pt.m { font-size: 16px; } .poster .pt.s { font-size: 13.5px; } .poster .pt.xs { font-size: 12px; }
+.poster .tl { position: absolute; left: 10px; top: 10px; font-size: 10.5px; font-weight: 700; letter-spacing: .06em; opacity: .9; }
+.poster .badges { position: absolute; right: 8px; top: 8px; display: grid; gap: 4px; justify-items: end; }
+.poster .badges .pill { font-size: 10.5px; padding: 1px 7px; }
+.poster .pill.dub, .hero .pill.dub, .dhead .pill.dub { background: #2fd38c; color: #04130c; border-color: transparent; }
+.poster .pill.dubsoon, .hero .pill.dubsoon, .dhead .pill.dubsoon { background: #2c5fd6; color: #fff; border-color: transparent; }
+.poster img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
+.poster.has-img .pt, .poster.has-img .big { display: none; }
+.poster .prog { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(255, 255, 255, .25); z-index: 2; }
+.poster .prog i { display: block; height: 100%; background: var(--accent); }
+.poster.wide { aspect-ratio: 16 / 9; }
+.poster.wide .pt { font-size: 22px; -webkit-line-clamp: 3; max-width: 78%; }
+.poster.wide .pt.m { font-size: 19px; } .poster.wide .pt.s, .poster.wide .pt.xs { font-size: 15px; }
+
+/* Ranking em alta */
+.rank { display: grid; grid-template-columns: auto 1fr; align-items: end; gap: 0; }
+.rank .n { font-family: var(--display); font-size: clamp(64px, 8vw, 104px); line-height: .78; color: transparent; -webkit-text-stroke: 2px var(--muted); margin-right: -10px; z-index: 1; }
+
+/* ---------- grade ---------- */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 22px 16px; }
+@media (max-width: 480px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 12px; } }
+
+/* ---------- filtros ---------- */
+.filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 18px; }
+.chip { border: 1px solid var(--line); background: var(--bg-2); border-radius: 999px; padding: 7px 13px; font-size: 13px; color: var(--muted); }
+.chip[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+.select { border: 1px solid var(--line); background: var(--bg-2); border-radius: 999px; padding: 7px 12px; font-size: 13px; }
+.bigsearch { display: flex; gap: 10px; align-items: center; background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--r-m); padding: 12px 16px; margin-bottom: 14px; }
+.bigsearch input { flex: 1; min-width: 0; border: 0; outline: none; background: none; font-size: 17px; }
+.count { color: var(--muted); font-size: 13px; margin-left: auto; }
+
+/* ---------- calendário ---------- */
+.days { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(64px, 1fr); gap: 8px; overflow-x: auto; padding-bottom: 6px; margin-bottom: 18px; scrollbar-width: none; }
+.days::-webkit-scrollbar { display: none; }
+.day { display: grid; gap: 2px; justify-items: center; padding: 10px 6px; border-radius: var(--r-m); border: 1px solid var(--line); background: var(--bg-2); }
+.day small { font-size: 11px; color: var(--muted); text-transform: capitalize; }
+.day b { font-family: var(--display); font-weight: 400; font-size: 22px; line-height: 1; }
+.day em { font-style: normal; font-size: 11px; color: var(--muted); }
+.day[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.day[aria-pressed="true"] small, .day[aria-pressed="true"] em { color: inherit; opacity: .85; }
+.slots { display: grid; gap: 10px; }
+.slot { display: grid; grid-template-columns: 64px 54px 1fr auto; gap: 14px; align-items: center; padding: 10px 12px; border-radius: var(--r-m); background: var(--bg-2); border: 1px solid var(--line); text-align: left; width: 100%; }
+.slot .time { font-weight: 700; font-size: 16px; font-variant-numeric: tabular-nums; }
+.slot .time small { display: block; font-weight: 500; font-size: 11px; color: var(--muted); }
+.slot .poster { border-radius: 8px; }
+.slot .poster .pt { font-size: 7px; left: 4px; right: 4px; bottom: 4px; }
+.slot .poster .tl, .slot .poster .badges, .slot .poster .big { display: none; }
+.slot .info { min-width: 0; display: grid; gap: 4px; }
+.slot .info b { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.slot .info span { color: var(--muted); font-size: 13px; }
+.slot .tags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.slot.past { opacity: .62; }
+.slot.now { border-color: var(--accent); }
+@media (max-width: 560px) { .slot { grid-template-columns: 52px 44px 1fr; } .slot .tags { grid-column: 3; justify-content: flex-start; } }
+.empty { padding: 28px; border: 1px dashed var(--line); border-radius: var(--r-m); color: var(--muted); text-align: center; }
+
+/* ---------- novidades ---------- */
+.feed { display: grid; gap: 10px; max-width: 860px; }
+.fi { display: grid; grid-template-columns: 54px 1fr auto; gap: 14px; align-items: center; padding: 12px; border-radius: var(--r-m); background: var(--bg-2); border: 1px solid var(--line); text-align: left; width: 100%; }
+.fi .poster .pt { font-size: 7px; left: 4px; right: 4px; bottom: 4px; }
+.fi .poster .tl, .fi .poster .badges, .fi .poster .big { display: none; }
+.fi .txt { min-width: 0; display: grid; gap: 3px; }
+.fi .txt b { font-weight: 700; }
+.fi .txt span { color: var(--muted); font-size: 13.5px; }
+.fi time { color: var(--muted); font-size: 12px; white-space: nowrap; }
+.kind { font-size: 11px; font-weight: 700; letter-spacing: .04em; }
+.kind.k-ep { color: var(--new); } .kind.k-dub { color: var(--ok); } .kind.k-estreia, .kind.k-temporada { color: var(--accent); } .kind.k-filme, .kind.k-lancamento { color: var(--info); } .kind.k-leg { color: var(--muted); } .kind.k-pausa { color: var(--muted); }
+.agentbox { display: grid; gap: 10px; padding: 18px; border-radius: var(--r-l); background: var(--bg-2); border: 1px solid var(--line); margin-bottom: 18px; max-width: 860px; }
+.agentbox .stats { display: flex; flex-wrap: wrap; gap: 18px; }
+.agentbox .stats div { display: grid; }
+.agentbox .stats b { font-family: var(--display); font-weight: 400; font-size: 22px; font-variant-numeric: tabular-nums; }
+.agentbox .stats span { font-size: 12px; color: var(--muted); }
+.agentbox p { margin: 0; color: var(--muted); font-size: 13.5px; }
+
+/* ---------- detalhe ---------- */
+.detail { padding-bottom: 40px; }
+.dhead { position: relative; isolation: isolate; overflow: hidden; }
+.dhead .art { position: absolute; inset: 0; z-index: -2; }
+.dhead::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(0deg, var(--bg) 4%, color-mix(in srgb, var(--bg) 70%, transparent) 45%, color-mix(in srgb, var(--bg) 30%, transparent)); }
+.dhead .in { display: grid; grid-template-columns: minmax(150px, 230px) 1fr; gap: clamp(18px, 3vw, 40px); align-items: end; padding-block: clamp(70px, 10vw, 140px) 24px; }
+.dhead h1 { font-family: var(--display); font-weight: 400; font-size: clamp(26px, 4vw, 46px); line-height: 1.04; }
+.dhead .alt { color: var(--muted); font-size: 14px; margin-top: 6px; }
+.dhead .meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 14px 0; font-size: 13.5px; color: var(--muted); }
+.dhead .meta .sep { opacity: .5; }
+.dhead .ctas { display: flex; flex-wrap: wrap; gap: 10px; }
+@media (max-width: 640px) { .dhead .in { grid-template-columns: 1fr; padding-top: 24px; } .dhead .in > .poster { width: 52%; justify-self: start; } }
+.back { position: absolute; top: 14px; left: var(--gut); z-index: 3; }
+.dbody { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 32px; padding-block: 8px 0; }
+@media (max-width: 960px) { .dbody { grid-template-columns: 1fr; } }
+.syn { max-width: 70ch; color: var(--fg); margin: 0 0 18px; }
+.syn.dim { color: var(--muted); }
+.box { border: 1px solid var(--line); border-radius: var(--r-l); padding: 18px; background: var(--bg-2); display: grid; gap: 14px; align-content: start; }
+.box h3 { font-size: 15px; font-weight: 700; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; font-size: 13.5px; margin: 0; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; }
+.where { display: grid; gap: 8px; }
+.where a { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 14px; border-radius: 12px; background: var(--bg-3); text-decoration: none; font-weight: 700; font-size: 14px; }
+.where a span { font-weight: 500; color: var(--muted); font-size: 12px; }
+.where a.main { background: var(--accent); color: var(--accent-ink); }
+.where a.main span { color: inherit; opacity: .85; }
+.links { display: flex; flex-wrap: wrap; gap: 8px; }
+.links a { font-size: 12.5px; color: var(--muted); border: 1px solid var(--line); padding: 5px 10px; border-radius: 999px; text-decoration: none; }
+.eps-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin: 6px 0 12px; }
+.eps-h h2 { font-family: var(--display); font-weight: 400; font-size: 21px; }
+.eps { display: grid; gap: 8px; }
+.ep { display: grid; grid-template-columns: 58px 1fr auto; gap: 14px; align-items: center; padding: 10px 12px; border-radius: 12px; background: var(--bg-2); border: 1px solid var(--line); }
+.ep .no { font-family: var(--display); font-weight: 400; font-size: 18px; font-variant-numeric: tabular-nums; }
+.ep .t { display: grid; gap: 2px; min-width: 0; }
+.ep .t b { font-weight: 700; font-size: 14px; }
+.ep .t span { color: var(--muted); font-size: 12.5px; }
+.ep .acts { display: flex; gap: 6px; align-items: center; }
+.ep.future { opacity: .6; }
+.ep.next { border-color: var(--new); }
+.ep.seen .no { color: var(--muted); text-decoration: line-through; }
+.check { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg-3); display: grid; place-items: center; }
+.check[aria-pressed="true"] { background: var(--ok); color: #04130c; border-color: transparent; }
+.check svg { width: 16px; height: 16px; }
+.ranges { display: flex; gap: 6px; flex-wrap: wrap; }
+.countdown { font-variant-numeric: tabular-nums; color: var(--new); font-weight: 700; }
+
+/* ---------- player ---------- */
+.player { position: fixed; inset: 0; z-index: 100; background: #000; display: grid; color: #fff; }
+.player[hidden] { display: none; }
+.player video, .player canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; }
+.player canvas { pointer-events: none; }
+.player .ui { position: absolute; inset: 0; display: grid; grid-template-rows: auto 1fr auto; transition: opacity .3s; background: linear-gradient(rgba(0, 0, 0, .65), transparent 18%, transparent 70%, rgba(0, 0, 0, .8)); }
+.player.idle .ui { opacity: 0; cursor: none; }
+.player .bar { display: flex; align-items: center; gap: 12px; padding: max(14px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 14px max(16px, env(safe-area-inset-left, 0px)); }
+.player .bar .ttl { flex: 1; min-width: 0; }
+.player .bar .ttl b { display: block; font-family: var(--display); font-weight: 400; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.player .bar .ttl span { font-size: 12.5px; opacity: .75; }
+.player .pbtn { width: 44px; height: 44px; border-radius: 50%; border: 0; background: rgba(255, 255, 255, .12); color: #fff; display: grid; place-items: center; flex: none; }
+.player .pbtn svg { width: 20px; height: 20px; }
+.player .pbtn.lg { width: 70px; height: 70px; background: rgba(255, 255, 255, .16); }
+.player .pbtn.lg svg { width: 30px; height: 30px; }
+.player .mid { display: flex; align-items: center; justify-content: center; gap: 28px; }
+.player .ctrl { padding: 0 max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); display: grid; gap: 10px; }
+.player .seek { position: relative; height: 18px; display: flex; align-items: center; cursor: pointer; touch-action: none; }
+.player .seek .tr { position: absolute; left: 0; right: 0; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .25); }
+.player .seek .bf { position: absolute; left: 0; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .4); }
+.player .seek .pl { position: absolute; left: 0; height: 4px; border-radius: 2px; background: var(--accent); }
+.player .seek .kn { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: #fff; transform: translateX(-50%); }
+.player .seek:hover .tr, .player .seek:hover .bf, .player .seek:hover .pl { height: 6px; }
+.player .row2 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.player .row2 .t { font-variant-numeric: tabular-nums; font-size: 13px; opacity: .9; }
+.player .row2 .sp { flex: 1; }
+.player .skip { position: absolute; right: max(20px, env(safe-area-inset-right, 0px)); bottom: 120px; }
+.player .menu { position: absolute; right: max(16px, env(safe-area-inset-right, 0px)); bottom: 96px; width: min(340px, calc(100vw - 32px)); max-height: 60vh; overflow: auto; background: rgba(20, 20, 40, .96); border: 1px solid rgba(255, 255, 255, .14); border-radius: 16px; padding: 14px; display: grid; gap: 14px; }
+.player .menu h4 { margin: 0 0 6px; font-size: 12px; letter-spacing: .05em; opacity: .7; font-weight: 700; }
+.player .opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.player .opts button { border: 1px solid rgba(255, 255, 255, .2); background: none; color: #fff; border-radius: 999px; padding: 5px 11px; font-size: 12.5px; }
+.player .opts button[aria-pressed="true"] { background: #fff; color: #111; }
+.player .drop { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 24px; }
+.player .drop .card2 { max-width: 520px; display: grid; gap: 14px; justify-items: center; background: rgba(255, 255, 255, .06); border: 1px dashed rgba(255, 255, 255, .3); border-radius: 22px; padding: 28px; }
+.player .drop h3 { font-family: var(--display); font-weight: 400; font-size: 24px; }
+.player .drop p { margin: 0; opacity: .78; font-size: 14px; }
+.player .drop label { cursor: pointer; }
+.player ::cue { background: var(--cue-bg, rgba(0, 0, 0, .55)); color: var(--cue-fg, #fff); font-size: var(--cue-size, 100%); font-family: var(--body); }
+.player .toast { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, .6); padding: 10px 16px; border-radius: 12px; font-weight: 700; pointer-events: none; }
+.vol { width: 90px; accent-color: var(--accent); }
+@media (max-width: 560px) { .vol { display: none; } }
+
+/* ---------- diálogo ---------- */
+.sheet { position: fixed; inset: 0; z-index: 90; background: var(--scrim); display: grid; place-items: center; padding: 16px; }
+.sheet[hidden] { display: none; }
+.sheet .panel { width: min(520px, 100%); max-height: 86vh; overflow: auto; background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--r-l); padding: 22px; display: grid; gap: 16px; box-shadow: var(--card-shadow); }
+.sheet h3 { font-family: var(--display); font-weight: 400; font-size: 21px; }
+.sheet p { margin: 0; color: var(--muted); font-size: 14px; }
+.toastbar { position: fixed; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 120; background: var(--fg); color: var(--bg); padding: 10px 18px; border-radius: 999px; font-weight: 700; font-size: 14px; box-shadow: var(--card-shadow); }
+.toastbar[hidden] { display: none; }
+.foot { padding-block: 30px 40px; color: var(--muted); font-size: 12.5px; display: grid; gap: 6px; max-width: 80ch; }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
+
+/* ---------- fotos reais ---------- */
+.art img.bn { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; }
+.art img.bn.blur { filter: blur(18px) saturate(1.2); transform: scale(1.15); }
+.dhead .art::after { content: ""; position: absolute; inset: 0; z-index: 2; background: color-mix(in srgb, var(--bg) 25%, transparent); }
+.ep { grid-template-columns: 148px 1fr auto; }
+.ep .thumb { position: relative; aspect-ratio: 16 / 9; border-radius: 9px; overflow: hidden; display: grid; place-items: center; color: #fff;
+  background: radial-gradient(90% 90% at 80% 10%, hsl(calc(var(--h) + 25) 80% 60% / .85), transparent 60%), linear-gradient(160deg, hsl(var(--h) 65% 42%), hsl(calc(var(--h) + 38) 65% 16%)); }
+.ep .thumb::before { content: ""; position: absolute; inset: 0; background-image: radial-gradient(circle, rgba(255,255,255,.22) 1px, transparent 1.4px); background-size: 6px 6px; }
+.ep .thumb .no { position: relative; z-index: 1; font-size: 22px; text-shadow: 0 2px 8px rgba(0,0,0,.35); }
+.ep .thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 2; }
+.ep .thumb .eprog { position: absolute; left: 0; bottom: 0; height: 4px; background: var(--accent); z-index: 3; }
+.ep.seen .thumb img { opacity: .55; }
+.ep .t b { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+@media (max-width: 560px) { .ep { grid-template-columns: 112px 1fr auto; gap: 10px; } .ep .thumb .no { font-size: 18px; } }
+.rail.gal { grid-auto-columns: auto; align-items: start; }
+.ph { margin: 0; display: grid; gap: 6px; width: clamp(130px, 14vw, 170px); }
+.ph.wide { width: clamp(300px, 38vw, 520px); }
+.ph img { width: 100%; aspect-ratio: 2 / 3; object-fit: cover; border-radius: var(--r-m); background: var(--bg-3); }
+.ph.wide img { aspect-ratio: auto; height: calc(clamp(130px, 14vw, 170px) * 1.5); }
+.ph figcaption { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- episódios grátis oficiais ---------- */
+.pill.free { background: #ffb23e; color: #1b1300; }
+.freetag { font-style: normal; color: var(--new); font-weight: 700; }
+.boxp { margin: 0; color: var(--muted); font-size: 13.5px; }
+.ep .acts { flex-wrap: wrap; justify-content: flex-end; }
+.ep .epplay { padding: 6px 11px; }
+.ep .epplay svg { width: 14px; height: 14px; }
+.ep .thumb[data-yt] { cursor: pointer; }
+.ep .thumb .playov { position: absolute; z-index: 4; width: 38px; height: 38px; border-radius: 50%; background: rgba(0,0,0,.55); display: grid; place-items: center; color: #fff; }
+.ep .thumb .playov svg { width: 18px; height: 18px; }
+@media (max-width: 560px) { .ep { grid-template-columns: 112px 1fr; } .ep .acts { grid-column: 1 / -1; justify-content: flex-start; } }
+.ytp { position: fixed; inset: 0; z-index: 110; background: #05050c; color: #fff; display: grid; grid-template-rows: auto 1fr auto; }
+.ytp[hidden] { display: none; }
+.ytbar { display: flex; align-items: center; gap: 12px; padding: max(12px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px)) 12px max(16px, env(safe-area-inset-left, 0px)); }
+.ytbar .ttl { flex: 1; min-width: 0; }
+.ytbar .ttl b { display: block; font-family: var(--display); font-weight: 400; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ytbar .ttl span { font-size: 12.5px; opacity: .75; }
+.ytbar .pbtn { width: 44px; height: 44px; border-radius: 50%; border: 0; background: rgba(255,255,255,.12); color: #fff; display: grid; place-items: center; flex: none; }
+.ytbar .pbtn svg { width: 20px; height: 20px; }
+.ytaud { display: flex; gap: 6px; }
+.ytaud button, .yteps button { border: 1px solid rgba(255,255,255,.25); background: none; color: #fff; border-radius: 999px; padding: 6px 12px; font-size: 13px; }
+.ytaud button[aria-pressed="true"], .yteps button[aria-pressed="true"] { background: #fff; color: #111; }
+.ytstage { display: grid; place-items: center; min-height: 0; padding: 0 max(0px, env(safe-area-inset-right, 0px)) 0 max(0px, env(safe-area-inset-left, 0px)); }
+.ytbox { position: relative; width: min(100%, calc((100vh - 170px) * 16 / 9)); aspect-ratio: 16 / 9; max-width: 100%; background: #000; }
+.ytbox iframe, .ytbox #ytframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.ytmsg { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 14px; padding: 24px; text-align: center; background: #0b0b18; }
+.ytmsg p { margin: 0; max-width: 46ch; opacity: .85; }
+.yteps { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 12px max(16px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+.yteps span { font-size: 12.5px; opacity: .7; margin-right: 4px; }
+@media (max-width: 560px) { .ytbar { flex-wrap: wrap; } .ytaud { order: 5; width: 100%; } .ytbox { width: 100%; } }
+
+.srcs { display: grid; gap: 8px; }
+.srcrow { display: grid; gap: 2px; padding: 11px 14px; border-radius: 12px; background: var(--bg-3); text-decoration: none; }
+.srcrow b { font-weight: 700; font-size: 14px; }
+.srcrow span { color: var(--muted); font-size: 12.5px; }
+.srcrow:first-child:not(.far) { background: var(--accent); color: var(--accent-ink); }
+.srcrow:first-child:not(.far) span { color: inherit; opacity: .85; }
+.srcrow.far { opacity: .7; }
+.ep .thumb[data-yt] .no { display: none; }
+.ytcc { border: 1px solid rgba(255,255,255,.25); background: none; color: #fff; border-radius: 999px; padding: 6px 12px; font-size: 13px; white-space: nowrap; }
+.ytcc[aria-pressed="true"] { background: #ffb23e; color: #1b1300; border-color: transparent; }
+@media (max-width: 560px) { .ytcc { order: 6; } }
+</style>
+
+<header class="top">
+  <button class="logo" id="logo" aria-label="Sakuga, início"><b>SAKU<i>GA</i></b><small>anime</small></button>
+  <nav class="nav" aria-label="Principal">
+    <button data-go="inicio">Início</button>
+    <button data-go="calendario">Calendário</button>
+    <button data-go="novidades">Novidades</button>
+    <button data-go="explorar">Explorar</button>
+    <button data-go="lista">Minha lista</button>
+  </nav>
+  <span class="spacer"></span>
+  <label class="searchbox"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="sr">Buscar anime</span><input id="qtop" type="search" placeholder="Buscar anime, estúdio, gênero" autocomplete="off"></label>
+  <button class="sync" id="syncbtn" title="Status do agente de atualização"><span class="dot"></span><span class="txt" id="synctxt">Atualizando…</span></button>
+  <button class="iconbtn only-m" id="msearch" aria-label="Buscar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg></button>
+  <button class="iconbtn" id="openplayer" aria-label="Abrir Sakuga Player" title="Sakuga Player"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+  <button class="iconbtn" id="opensettings" aria-label="Preferências" title="Preferências"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+</header>
+
+<main id="main">
+  <section class="view" id="v-inicio" data-view="inicio"></section>
+  <section class="view" id="v-calendario" data-view="calendario" hidden></section>
+  <section class="view" id="v-novidades" data-view="novidades" hidden></section>
+  <section class="view" id="v-explorar" data-view="explorar" hidden></section>
+  <section class="view" id="v-lista" data-view="lista" hidden></section>
+  <section class="view detail" id="v-titulo" data-view="titulo" hidden></section>
+</main>
+
+<nav class="tabs" aria-label="Principal">
+  <button class="tab" data-go="inicio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Início</button>
+  <button class="tab" data-go="calendario"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Calendário</button>
+  <button class="tab" data-go="novidades"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0"/></svg>Novidades</button>
+  <button class="tab" data-go="explorar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Explorar</button>
+  <button class="tab" data-go="lista"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h12v18l-6-4-6 4z"/></svg>Minha lista</button>
+</nav>
+
+<div class="player" id="player" hidden>
+  <video id="pv" playsinline preload="metadata"></video>
+  <canvas id="pc" hidden></canvas>
+  <div class="ui">
+    <div class="bar">
+      <button class="pbtn" id="pclose" aria-label="Fechar player"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18 9 12l6-6"/></svg></button>
+      <div class="ttl"><b id="pttl">Sakuga Player</b><span id="psub">Seus arquivos de vídeo, com legenda e realce de imagem</span></div>
+      <label class="pbtn" title="Abrir vídeo" style="cursor:pointer"><input type="file" id="pfile" accept="video/*,.mkv,.mp4,.webm,.m4v,.mov" class="sr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16M12 4v12M7 9l5-5 5 5"/></svg></label>
+    </div>
+    <div class="mid" id="pmid">
+      <button class="pbtn" id="pback" aria-label="Voltar 10 segundos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 17 6 12l5-5M18 17l-5-5 5-5"/></svg></button>
+      <button class="pbtn lg" id="pplay" aria-label="Reproduzir"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+      <button class="pbtn" id="pfwd" aria-label="Avançar 10 segundos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m13 17 5-5-5-5M6 17l5-5-5-5"/></svg></button>
+    </div>
+    <div class="ctrl">
+      <div class="seek" id="pseek" role="slider" aria-label="Posição do vídeo" tabindex="0" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="tr"></span><span class="bf" id="pbf"></span><span class="pl" id="ppl"></span><span class="kn" id="pkn"></span></div>
+      <div class="row2">
+        <span class="t" id="ptime">0:00 / 0:00</span>
+        <input class="vol" id="pvol" type="range" min="0" max="1" step="0.05" value="1" aria-label="Volume">
+        <span class="sp"></span>
+        <button class="btn sm ghost" id="pnext" hidden>Próximo episódio</button>
+        <button class="pbtn" id="pcc" aria-label="Legendas" title="Legendas (C)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M10 10.5a2 2 0 1 0 0 3M17 10.5a2 2 0 1 0 0 3"/></svg></button>
+        <button class="pbtn" id="pset" aria-label="Ajustes de imagem, velocidade e legenda" title="Ajustes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
+        <button class="pbtn" id="ppip" aria-label="Imagem no canto" title="Imagem no canto"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><rect x="12" y="11" width="7" height="6" rx="1" fill="currentColor"/></svg></button>
+        <button class="pbtn" id="pfs" aria-label="Tela cheia" title="Tela cheia (F)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      </div>
+    </div>
+  </div>
+  <button class="btn primary skip" id="pskip" hidden>Pular abertura</button>
+  <div class="menu" id="pmenu" hidden></div>
+  <div class="toast" id="ptoast" hidden></div>
+  <div class="drop" id="pdrop">
+    <div class="card2">
+      <h3>Sakuga Player</h3>
+      <p>Abra um episódio que você tem no aparelho (MP4, WebM, MKV com H.264). Adicione a legenda em .srt ou .vtt, ajuste o tamanho e a cor, e ligue o Realce Sakuga para deixar as linhas do traço mais nítidas.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center">
+        <label class="btn primary"><input type="file" id="pfile2" accept="video/*,.mkv,.mp4,.webm,.m4v,.mov" class="sr">Escolher vídeo</label>
+        <label class="btn ghost"><input type="file" id="psubfile" accept=".srt,.vtt,text/vtt" class="sr">Adicionar legenda</label>
+      </div>
+      <p id="pdrophint">Você também pode arrastar o arquivo para cá.</p>
+    </div>
+  </div>
+</div>
+
+<div class="ytp" id="ytp" hidden role="dialog" aria-label="Player de episódios grátis">
+  <div class="ytbar">
+    <button class="pbtn" id="ytclose" aria-label="Fechar player"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18 9 12l6-6"/></svg></button>
+    <div class="ttl"><b id="ytttl"></b><span id="ytsub"></span></div>
+    <div class="ytaud" id="ytaud" role="group" aria-label="Áudio"></div>
+    <button class="ytcc" id="ytcc" aria-pressed="true" hidden>Legenda PT ligada</button>
+    <button class="pbtn" id="ytfs" aria-label="Tela cheia"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+  </div>
+  <div class="ytstage"><div class="ytbox"><div id="ytframe"></div><div class="ytmsg" id="ytmsg" hidden></div></div></div>
+  <div class="yteps" id="yteps"></div>
+</div>
+
+<div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheett"><div class="panel" id="sheetp"></div></div>
+<div class="toastbar" id="toast" hidden role="status"></div>
+
+<script>"use strict";
+/* Sakuga — app de streaming de anime. Dados: catalog.json publicado com a página + banco do artifact (atualizado pelo agente a cada 12 h). */
+(() => {
+const $ = (s, el = document) => el.querySelector(s);
+const $$ = (s, el = document) => [...el.querySelectorAll(s)];
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const FRAMED = !!(window.claude && typeof window.claude.use === "function");
+const NOIMG = FRAMED || !!window.__SAKUGA_NOIMG;
+const API = Object.assign({ anilist: "https://graphql.anilist.co", kitsu: ["https://kitsu.app/api/edge", "https://kitsu.io/api/edge"] }, window.__SAKUGA_API || {});
+const IS_APP = /SakugaApp/i.test(navigator.userAgent);
+const MEDIA_ON = !FRAMED && (!window.__SAKUGA_NOIMG || !!window.__SAKUGA_API);
+const DAY = 864e5, WEEK = 7 * DAY;
+const now = () => Date.now();
+
+const GENRE_LABEL = { acao: "Ação", aventura: "Aventura", comedia: "Comédia", drama: "Drama", fantasia: "Fantasia", romance: "Romance", scifi: "Ficção científica", cotidiano: "Cotidiano", esportes: "Esportes", misterio: "Mistério", terror: "Terror", sobrenatural: "Sobrenatural", psicologico: "Psicológico", isekai: "Isekai", mecha: "Mecha", escolar: "Escolar", musica: "Música", suspense: "Suspense", historico: "Histórico", militar: "Militar", magia: "Magia", "artes-marciais": "Artes marciais", shounen: "Shounen", seinen: "Seinen", shoujo: "Shoujo" };
+const GENRE_HUE = { acao: 6, aventura: 28, comedia: 44, drama: 222, fantasia: 268, romance: 334, scifi: 192, cotidiano: 150, esportes: 205, misterio: 246, terror: 286, sobrenatural: 300, psicologico: 258, isekai: 312, mecha: 210, escolar: 172, musica: 320, suspense: 236, historico: 18 };
+const TYPE_LABEL = { TV: "Série", MOVIE: "Filme", ONA: "Web", OVA: "OVA" };
+const PROV = {
+  crunchyroll: { n: "Crunchyroll", u: (q) => "https://www.crunchyroll.com/pt-br/search?q=" + q, leg: true },
+  netflix: { n: "Netflix", u: (q) => "https://www.netflix.com/search?q=" + q, leg: true },
+  disney: { n: "Disney+", u: (q) => "https://www.disneyplus.com/pt-br/search?q=" + q, leg: true },
+  prime: { n: "Prime Video", u: (q) => "https://www.primevideo.com/search/?phrase=" + q, leg: true },
+  max: { n: "Max", u: (q) => "https://play.max.com/search?q=" + q, leg: true },
+  hidive: { n: "HIDIVE", u: (q) => "https://www.hidive.com/search?q=" + q, leg: false },
+};
+const FREE = {
+  yt: { n: "YouTube (canal oficial)", inapp: true }, pluto: { n: "Pluto TV" }, bilibili: { n: "Bilibili" }, iqiyi: { n: "iQIYI" },
+  tubi: { n: "Tubi" }, plex: { n: "Plex" }, abema: { n: "ABEMA" }, tver: { n: "TVer" }, nico: { n: "Niconico" },
+  wetv: { n: "WeTV" }, youku: { n: "Youku" }, laftel: { n: "Laftel" }, roku: { n: "The Roku Channel" }, retrocrush: { n: "RetroCrush" }, other: { n: "Site oficial" },
+};
+const REG = { BR: "Brasil", GLOBAL: "Mundo todo", LATAM: "América Latina", JP: "Só no Japão", CN: "Só na China", KR: "Só na Coreia", US: "Só nos EUA", ASIA: "Só na Ásia" };
+const regOk = (r) => !r || r === "BR" || r === "GLOBAL" || r === "LATAM";
+const KIND = { gratis: "Grátis no Sakuga", ep: "Novo episódio", dub: "Dublagem", estreia: "Estreia", temporada: "Nova temporada", filme: "Filme", lancamento: "Lançamento", leg: "Legenda", pausa: "Pausa", anuncio: "Anúncio" };
+const fmtD = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" });
+const fmtDW = new Intl.DateTimeFormat("pt-BR", { weekday: "long", day: "2-digit", month: "short" });
+const fmtT = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" });
+const fmtWD = new Intl.DateTimeFormat("pt-BR", { weekday: "short" });
+const fmtWDL = new Intl.DateTimeFormat("pt-BR", { weekday: "long" });
+const norm = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+/* ---------------- estado ---------------- */
+let ITEMS = [], BY = new Map(), FEED = [], STATUS = null, SOURCE = "arquivo", FILE_GEN = "";
+let DB_OK = false, DB_FEED = null, DB_STATUS = null;
+function dbApply() {
+  const fresh = (ts) => DB_OK || !FILE_GEN || (ts || "") >= FILE_GEN;
+  if (DB_FEED && fresh(DB_FEED.upd)) { applyFeed(DB_FEED); DB_FEED = null; }
+  if (DB_STATUS && fresh(DB_STATUS.lastRun)) { applyStatus(DB_STATUS); DB_STATUS = null; }
+}
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("sakuga:" + k); return v ? JSON.parse(v) : d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem("sakuga:" + k, JSON.stringify(v)); } catch { /* sem armazenamento */ } },
+};
+let ME = Object.assign({ list: [], prog: {}, seen: {}, prefs: { audio: "dub", theme: "auto" } }, store.get("me", {}));
+ME.prefs = Object.assign({ audio: "dub", theme: "auto" }, ME.prefs || {});
+let meRef = null, meTimer = 0, meChain = Promise.resolve();
+function saveMe() {
+  store.set("me", ME);
+  if (!meRef) return;
+  clearTimeout(meTimer);
+  meTimer = setTimeout(() => { const body = JSON.parse(JSON.stringify(ME)); meChain = meChain.then(() => meRef.set(body)).catch(() => {}); }, 2500);
+}
+const inList = (id) => ME.list.includes(id);
+function toggleList(id) {
+  if (inList(id)) { ME.list = ME.list.filter((x) => x !== id); toast("Removido da Minha lista"); }
+  else { ME.list.unshift(id); toast("Adicionado à Minha lista"); }
+  saveMe(); refreshListButtons(id);
+}
+function refreshListButtons(id) {
+  $$(`[data-list="${id}"]`).forEach((b) => { b.innerHTML = inList(id) ? ICON.check + "Na minha lista" : ICON.plus + "Minha lista"; b.setAttribute("aria-pressed", inList(id)); });
+  if (view === "lista") renderLista();
+}
+
+/* ---------------- ícones ---------------- */
+const ICON = {
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="m5 12 5 5 9-10"/></svg>',
+  play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>',
+  pause: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>',
+  ext: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>',
+  left: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M15 18 9 12l6-6"/></svg>',
+  right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="m9 18 6-6-6-6"/></svg>',
+  file: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 5v14l11-7z"/></svg>',
+};
+
+
+/* ---------------- fotos reais (AniList + Kitsu), fora do visualizador do Claude ---------------- */
+const Media = (() => {
+  const mem = new Map(), pend = new Map(), TTL = 864e5;
+  const Q = "query($id:Int){Media(id:$id,type:ANIME){coverImage{extraLarge large color} bannerImage nextAiringEpisode{episode airingAt} streamingEpisodes{title thumbnail} characters(sort:[ROLE,FAVOURITES_DESC],perPage:12){edges{role node{name{full} image{large}}}}}}";
+  const key = (id) => "media:" + id;
+  function peek(it) {
+    if (!it || !MEDIA_ON) return null;
+    if (mem.has(it.id)) return mem.get(it.id);
+    const c = store.get(key(it.id), null);
+    const d = c && now() - c.at < TTL ? c.d : null;
+    mem.set(it.id, d);
+    return d;
+  }
+  function remember(id, d) {
+    mem.set(id, d);
+    const idx = store.get("media:idx", []).filter((x) => x !== id);
+    idx.push(id);
+    while (idx.length > 150) { const old = idx.shift(); try { localStorage.removeItem("sakuga:" + key(old)); } catch {} }
+    store.set("media:idx", idx);
+    store.set(key(id), { at: now(), d });
+  }
+  async function anilist(id) {
+    const r = await fetch(API.anilist, { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ query: Q, variables: { id: Number(id) } }) });
+    if (!r.ok) throw new Error("anilist " + r.status);
+    const j = await r.json();
+    return (j.data && j.data.Media) || null;
+  }
+  async function kitsu(kt, from, to) {
+    const out = {};
+    for (const base of [].concat(API.kitsu)) {
+      try {
+        for (let off = from - 1; off < to; off += 20) {
+          const r = await fetch(`${base}/anime/${kt}/episodes?page[limit]=20&page[offset]=${off}&sort=number`, { headers: { Accept: "application/vnd.api+json" } });
+          if (!r.ok) throw new Error("kitsu " + r.status);
+          const j = await r.json();
+          for (const d of j.data || []) {
+            const a = d.attributes || {}, th = a.thumbnail || {};
+            if (a.number) out[a.number] = { title: a.canonicalTitle || (a.titles && (a.titles.en_us || a.titles.en_jp)) || "", thumb: th.large || th.original || th.medium || "" };
+          }
+          if ((j.data || []).length < 20) break;
+        }
+        return out;
+      } catch { /* tenta o próximo endereço */ }
+    }
+    return out;
+  }
+  async function load(it, from = 1, to = 50) {
+    const d = Object.assign({ cover: "", banner: "", color: "", chars: [], eps: {}, next: null, ranges: [] }, peek(it) || {});
+    const rk = from + "-" + to;
+    const jobs = [];
+    if (it.al && !d.al) jobs.push(anilist(it.al).then((m) => {
+      d.al = 1; if (!m) return;
+      d.cover = (m.coverImage && (m.coverImage.extraLarge || m.coverImage.large)) || "";
+      d.color = (m.coverImage && m.coverImage.color) || "";
+      d.banner = m.bannerImage || "";
+      d.next = m.nextAiringEpisode || null;
+      d.chars = ((m.characters && m.characters.edges) || []).filter((e) => e.node && e.node.image && e.node.image.large && !/default/.test(e.node.image.large)).map((e) => ({ n: e.node.name.full, img: e.node.image.large, main: e.role === "MAIN" }));
+      for (const s of m.streamingEpisodes || []) {
+        const mm = /(?:Episode|Ep\.?|Episódio)\s*(\d+)\s*[-–:]?\s*(.*)/i.exec(s.title || "");
+        if (mm && s.thumbnail) d.eps[mm[1]] = { title: (mm[2] || "").trim(), thumb: s.thumbnail };
+      }
+    }).catch(() => {}));
+    if (it.kt && it.tp !== "MOVIE" && !d.ranges.includes(rk)) jobs.push(kitsu(it.kt, from, to).then((e) => {
+      d.ranges.push(rk);
+      for (const [n, v] of Object.entries(e)) {
+        const cur = d.eps[n] || {};
+        d.eps[n] = { title: cur.title || v.title, thumb: cur.thumb || v.thumb };
+      }
+    }));
+    await Promise.all(jobs);
+    remember(it.id, d);
+    return d;
+  }
+  function get(it, from, to) {
+    if (!MEDIA_ON || !it) return Promise.resolve(null);
+    const k = it.id + ":" + from + "-" + to;
+    if (!pend.has(k)) pend.set(k, load(it, from, to).finally(() => setTimeout(() => pend.delete(k), 0)));
+    return pend.get(k);
+  }
+  return { get, peek };
+})();
+const imgTag = (src, cls = "", alt = "") => `<img class="${cls}" src="${esc(src)}" alt="${esc(alt)}" loading="lazy" decoding="async" referrerpolicy="no-referrer" data-ph>`;
+
+/* ---------------- dados ---------------- */
+function applyItems(items, source) {
+  if (!Array.isArray(items) || !items.length) return;
+  ITEMS = items.filter((x) => x && x.id);
+  pruneExpired(ITEMS);
+  BY = new Map(ITEMS.map((x) => [x.id, x]));
+  SOURCE = source;
+  rerender();
+}
+// vídeos e plataformas com data de saída ("ate", AAAA-MM-DD) somem sozinhos depois do prazo
+function pruneExpired(list) {
+  const today = new Date().toISOString().slice(0, 10);
+  const ok = (v) => !v || !v.ate || v.ate >= today;
+  for (const it of list) {
+    if (it.yt && typeof it.yt === "object") {
+      const yt = {};
+      for (const [n, arr] of Object.entries(it.yt)) { const keep = (arr || []).filter(ok); if (keep.length) yt[n] = keep; }
+      it.yt = yt;
+    }
+    if (Array.isArray(it.src)) it.src = it.src.filter(ok);
+  }
+}
+const fmtAte = (d) => (d ? d.slice(8, 10) + "/" + d.slice(5, 7) : "");
+function applyFeed(f) { if (f && Array.isArray(f.items)) { FEED = f.items; if (view === "novidades" || view === "inicio") rerender(); } }
+function applyStatus(s) { if (s) { STATUS = s; renderSync(); if (view === "novidades") renderNovidades(); } }
+
+async function boot() {
+  route();
+  try {
+    const r = await fetch("catalog.json", { cache: "no-cache" });
+    if (r.ok) {
+      const j = await r.json();
+      FILE_GEN = (j.status && j.status.lastRun) || "";
+      if (!ITEMS.length || SOURCE === "arquivo") applyItems(j.items, "arquivo");
+      if (SOURCE === "arquivo") { applyFeed({ items: j.feed }); applyStatus(j.status); }
+    }
+  } catch { /* sem arquivo: o banco preenche */ }
+  if (!ITEMS.length) rerender();
+  initDb();
+  if (!FRAMED) {
+    remoteRefresh(false);
+    setInterval(() => remoteRefresh(true), 20 * 60 * 1000);
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") remoteRefresh(true); });
+  }
+  setInterval(() => { renderSync(); if (view === "calendario") renderCalendario(); tickCountdowns(); }, 30000);
+}
+
+// Fora do Claude (site e app Android) o catálogo novo vem direto do GitHub, assim que o agente publica: sem baixar APK.
+const REMOTE_CATALOG = "https://raw.githubusercontent.com/kaiqueguimacuper-bit/teste-2/main/site/catalog.json";
+let lastRemote = 0;
+async function remoteRefresh(announce) {
+  if (Date.now() - lastRemote < 60000) return;
+  lastRemote = Date.now();
+  try {
+    const r = await fetch(REMOTE_CATALOG + "?t=" + Math.floor(Date.now() / 300000), { cache: "no-store" });
+    if (!r.ok) return;
+    const j = await r.json();
+    const gen = (j.status && j.status.lastRun) || "";
+    if (!Array.isArray(j.items) || j.items.length < 50 || !gen || (FILE_GEN && gen <= FILE_GEN)) return;
+    FILE_GEN = gen;
+    applyItems(j.items, "arquivo");
+    applyFeed({ items: j.feed || [] });
+    applyStatus(j.status);
+    if (announce) toast("Catálogo atualizado com as novidades");
+  } catch { /* sem internet: fica com o que já tem */ }
+}
+
+async function initDb() {
+  if (!FRAMED) return;
+  let db = null;
+  try { db = await window.claude.use("db"); } catch { db = null; }
+  if (!db) return;
+  try {
+    db.collection("catalog").onSnapshot((snap) => {
+      const docs = snap.docs.map((d) => d.data()).filter((d) => d && Array.isArray(d.items));
+      if (!docs.length) return;
+      const gens = docs.map((d) => d.gen || d.upd || "");
+      const top = gens.sort().at(-1);
+      if (FILE_GEN && top && top < FILE_GEN) return; // o arquivo publicado é mais novo que o banco
+      DB_OK = true; dbApply();
+      let use = docs.filter((d) => (d.gen || d.upd || "") === top);
+      if (use[0] && use[0].parts && use.length < use[0].parts) use = docs; // geração incompleta: junta tudo
+      const map = new Map();
+      use.sort((a, b) => (a.part || 0) - (b.part || 0)).forEach((d) => d.items.forEach((it) => map.set(it.id, it)));
+      applyItems([...map.values()], "banco");
+    }, () => {});
+    db.doc("feed/main").onSnapshot((s) => { if (s.exists) { DB_FEED = s.data(); dbApply(); } }, () => {});
+    db.doc("meta/status").onSnapshot((s) => { if (s.exists) { DB_STATUS = s.data(); dbApply(); } }, () => {});
+  } catch { /* banco indisponível nesta visualização */ }
+  try {
+    const user = await window.claude.use("user");
+    const uid = user ? await user.id() : null;
+    if (uid) {
+      meRef = db.doc("data/users/" + uid + "/state");
+      const s = await meRef.get();
+      if (s.exists) {
+        const d = s.data() || {};
+        ME.list = [...new Set([...(d.list || []), ...ME.list])];
+        ME.prog = Object.assign({}, d.prog || {}, ME.prog);
+        ME.seen = Object.assign({}, d.seen || {}, ME.seen);
+        ME.prefs = Object.assign({}, ME.prefs, d.prefs || {});
+        store.set("me", ME); applyTheme(); rerender();
+      }
+    }
+  } catch { meRef = null; }
+}
+
+/* ---------------- exibição semanal ---------------- */
+function airState(it, t = now()) {
+  const a = it.air;
+  if (a) {
+    let aired, next;
+    const total = a.total || (it.st === "airing" ? null : it.eps) || null;
+    if (a.next) {
+      const nx = Date.parse(a.next), base = a.aired || 0;
+      const k = t >= nx ? Math.floor((t - nx) / WEEK) + 1 : 0;
+      aired = base + k; next = nx + k * WEEK;
+    } else {
+      const s = Date.parse(a.start);
+      if (t < s) { aired = 0; next = s; } else { const k = Math.floor((t - s) / WEEK) + 1; aired = k; next = s + k * WEEK; }
+    }
+    if (total && aired >= total) { aired = total; next = null; }
+    if (a.hold) next = null;
+    const ref = a.next ? Date.parse(a.next) - (a.aired || 0) * WEEK : Date.parse(a.start) - WEEK;
+    return { aired, total, next, approx: !!a.approx, epDate: (n) => ref + n * WEEK };
+  }
+  if (it.weekly) {
+    const [hh, mm] = it.weekly.utc.split(":").map(Number);
+    const d = new Date(t); d.setUTCHours(hh, mm, 0, 0);
+    let diff = (it.weekly.wd - d.getUTCDay() + 7) % 7; let nx = d.getTime() + diff * DAY; if (nx <= t) nx += WEEK;
+    return { aired: it.eps || null, total: null, next: nx, approx: true, weekly: true, epDate: () => null, last: nx - WEEK };
+  }
+  return null;
+}
+const lastEpAt = (it, t = now()) => { const s = airState(it, t); if (!s) return null; if (s.weekly) return s.last; return s.aired ? s.epDate(s.aired) : null; };
+function isNew(it, t = now()) { const l = lastEpAt(it, t); return l && t - l < 2 * DAY ? airState(it, t) : null; }
+
+/* ---------------- textos ---------------- */
+function ago(ms) {
+  const d = now() - ms, a = Math.abs(d), fut = d < 0;
+  const m = Math.round(a / 6e4), h = Math.round(a / 36e5), dd = Math.round(a / DAY);
+  const s = m < 1 ? "agora" : m < 60 ? m + " min" : h < 24 ? h + " h" : dd + (dd === 1 ? " dia" : " dias");
+  if (s === "agora") return s;
+  return fut ? "em " + s : "há " + s;
+}
+function countdown(ms) {
+  let d = Math.max(0, ms - now());
+  const D = Math.floor(d / DAY); d -= D * DAY; const H = Math.floor(d / 36e5); d -= H * 36e5; const M = Math.floor(d / 6e4);
+  return D ? `${D}d ${H}h` : H ? `${H}h ${String(M).padStart(2, "0")}min` : `${M} min`;
+}
+function whenText(ms) {
+  const d = new Date(ms), today = new Date(); const t0 = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  const diff = Math.floor((new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() - t0) / DAY);
+  const day = diff === 0 ? "hoje" : diff === 1 ? "amanhã" : diff === -1 ? "ontem" : diff > 1 && diff < 7 ? fmtWDL.format(d) : fmtD.format(d);
+  return day + " às " + fmtT.format(d);
+}
+const seasonText = (it) => [it.s, it.y].filter(Boolean).join(" de ");
+const statusText = (it) => ({ airing: "Em exibição", finished: "Completo", upcoming: "Em breve", season: "Estreia nesta temporada", paused: "Em pausa" }[it.st] || "");
+function metaLine(it) {
+  const p = [TYPE_LABEL[it.tp] || it.tp];
+  if (it.y) p.push(it.y);
+  const s = airState(it);
+  if (s && !s.weekly && it.st === "airing") p.push(`${s.aired}${s.total ? "/" + s.total : ""} eps`);
+  else if (it.aired) p.push(it.aired + " eps");
+  else if (it.eps && it.tp !== "MOVIE") p.push(it.eps + " eps");
+  return p.join(" · ");
+}
+const hasLeg = (it) => (it.prov || []).some((p) => PROV[p] && PROV[p].leg) || freeKinds(it).has("leg");
+const freeEps = (it) => Object.keys(it.yt || {}).map(Number).filter((n) => (it.yt[n] || []).length).sort((a, b) => a - b);
+function freeKinds(it) { const k = new Set(); for (const arr of Object.values(it.yt || {})) for (const v of arr) k.add(v.k); return k; }
+const freeCount = (it) => freeEps(it).length;
+const freeSrc = (it) => (it.src || []).filter((s) => s && s.u);
+const hasFree = (it) => freeCount(it) > 0 || freeSrc(it).some((s) => regOk(s.reg));
+function freeNext(it) { const eps = freeEps(it); if (!eps.length) return null; const p = ME.prog[it.id]; const seen = new Set(ME.seen[it.id] || []); return (p && eps.includes(p.ep) && !seen.has(p.ep) ? p.ep : eps.find((n) => !seen.has(n))) || eps[0]; }
+const KLABEL = { dub: "Dublado", leg: "Legendado", ja: "Japonês · leg. PT", en: "Inglês · leg. PT", orig: "Original · leg. PT" };
+const KLONG = { dub: "Dublado PT-BR", leg: "Legendado PT-BR", ja: "Áudio japonês · legenda automática em português", en: "Legenda em inglês · tradução automática para português", orig: "Áudio original · legenda automática em português" };
+const AUTOCC = (k) => k !== "dub" && k !== "leg";
+const ICON_FREE = '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>';
+
+/* ---------------- pôster gerado ---------------- */
+function hash(s) { let h = 2166136261; for (const c of String(s)) { h ^= c.charCodeAt(0); h = Math.imul(h, 16777619); } return h >>> 0; }
+function hueOf(it) { const g = (it.g || []).find((x) => GENRE_HUE[x] != null); const base = g ? GENRE_HUE[g] : hash(it.id) % 360; return (base + (hash(it.id) % 36) - 18 + 360) % 360; }
+function seasonNo(it) {
+  const m = /(\d+)ª temporada/.exec(it.t) || /(\d+)(?:st|nd|rd|th) Season/i.exec(it.r) || /Season ?(\d+)/i.exec(it.r) || /\b(II|III|IV)\b/.exec(it.r);
+  if (!m) return it.tp === "MOVIE" ? "" : "";
+  return { II: "2", III: "3", IV: "4" }[m[1]] || m[1];
+}
+function sizeCls(t, wide) { const n = t.length; return n <= 14 ? "" : n <= 26 ? "m" : n <= (wide ? 60 : 46) ? "s" : "xs"; }
+function poster(it, o = {}) {
+  const title = shortTitle(it.t);
+  const badges = [];
+  if (!o.nobadge) {
+    const nw = isNew(it); if (nw && !nw.weekly) badges.push(`<span class="pill new">EP ${nw.aired}</span>`);
+    if (it.dub === 2) badges.push('<span class="pill dub">DUB</span>'); else if (it.dub === 1) badges.push('<span class="pill dubsoon">DUB EM BREVE</span>');
+    if (hasFree(it)) badges.push('<span class="pill free">GRÁTIS</span>');
+  }
+  const mc = Media.peek(it);
+  const src = (o.wide && mc && mc.banner) || (mc && mc.cover) || (!NOIMG && it.pic) || "";
+  const img = src ? imgTag(src) : "";
+  const prog = o.prog != null ? `<span class="prog"><i style="width:${Math.round(o.prog * 100)}%"></i></span>` : "";
+  const sn = seasonNo(it);
+  return `<div class="poster${o.wide ? " wide" : ""}" style="--h:${hueOf(it)}" aria-hidden="true">${sn ? `<span class="big">${esc(sn)}</span>` : ""}<span class="tl">${esc((TYPE_LABEL[it.tp] || it.tp).toUpperCase())}${it.y ? " · " + it.y : ""}</span><span class="pt ${sizeCls(title, o.wide)}">${esc(title)}</span>${badges.length ? `<span class="badges">${badges.join("")}</span>` : ""}${img}${prog}</div>`;
+}
+const shortTitle = (t) => String(t).replace(/\s*\((\d+)ª temporada[^)]*\)/, " $1").replace(/\s{2,}/g, " ");
+document.addEventListener("load", (e) => { const t = e.target; if (t.tagName === "IMG" && t.hasAttribute("data-ph")) t.parentElement.classList.add("has-img"); }, true);
+document.addEventListener("error", (e) => { const t = e.target; if (t.tagName === "IMG" && t.hasAttribute("data-ph")) t.remove(); }, true);
+
+function card(it, o = {}) {
+  const sub = o.sub ?? metaLine(it);
+  return `<button class="card" data-open="${esc(it.id)}">${poster(it, o)}<span class="cap"><b>${esc(it.t)}</b><span>${esc(sub)}</span></span></button>`;
+}
+function rail(id, title, desc, items, o = {}) {
+  if (!items.length) return "";
+  const more = o.more ? `<button class="more" data-more="${esc(o.more)}">Ver tudo</button>` : "";
+  const body = items.map((x, i) => (o.rank ? `<div class="rank"><span class="n">${i + 1}</span>${card(x)}</div>` : card(x, typeof o.card === "function" ? o.card(x) : o.card || {}))).join("");
+  return `<section class="section row" aria-labelledby="h-${id}"><div class="wrap sec-h"><div><h2 id="h-${id}">${esc(title)}</h2>${desc ? `<p>${esc(desc)}</p>` : ""}</div>${more}</div><button class="arrow l" data-scroll="-1" aria-label="Anterior">${ICON.left}</button><div class="rail${o.wide ? " wide" : ""}${o.rank ? " ranked" : ""}">${body}</div><button class="arrow r" data-scroll="1" aria-label="Próximo">${ICON.right}</button></section>`;
+}
+
+/* ---------------- seleções ---------------- */
+const airing = () => ITEMS.filter((x) => x.st === "airing" && (x.air || x.weekly));
+function byScore(a, b) { return (b.sc || 0) - (a.sc || 0) || (b.y || 0) - (a.y || 0); }
+function recentEps(hours = 96) {
+  const t = now(); const out = [];
+  for (const it of airing()) { const l = lastEpAt(it, t); if (l && t - l < hours * 36e5 && t >= l) out.push([l, it]); }
+  return out.sort((a, b) => b[0] - a[0]);
+}
+function featured() {
+  const hot = ITEMS.filter((x) => x.hot && x.st === "airing").sort((a, b) => a.hot - b.hot);
+  const syn = hot.filter((x) => x.syn);
+  const rest = airing().filter((x) => x.syn && !hot.includes(x));
+  const free = ITEMS.filter((x) => hasFree(x)).sort((a, b) => freeCount(b) - freeCount(a) || byScore(a, b)).slice(0, 2);
+  return [...new Set([...syn.slice(0, 3), ...free, ...hot, ...rest])].slice(0, 6);
+}
+
+/* ---------------- roteamento ---------------- */
+let view = "inicio", titleId = null;
+const VIEWS = ["inicio", "calendario", "novidades", "explorar", "lista"];
+function route() {
+  const h = decodeURIComponent(location.hash.replace(/^#/, ""));
+  if (h.startsWith("t-")) { view = "titulo"; titleId = h.slice(2); }
+  else view = VIEWS.includes(h) ? h : "inicio";
+  $$(".view").forEach((v) => (v.hidden = v.dataset.view !== view));
+  $$("[data-go]").forEach((b) => b.setAttribute("aria-current", b.dataset.go === view ? "page" : "false"));
+  rerender();
+  window.scrollTo(0, 0);
+}
+function go(v) { if (location.hash === "#" + v) route(); else location.hash = v; }
+window.addEventListener("hashchange", route);
+let navDepth = 0;
+function openTitle(id) { navDepth++; location.hash = "t-" + id; }
+function rerender() {
+  const ae = document.activeElement, fid = ae && ae.id && ae.tagName === "INPUT" ? ae.id : null;
+  const sel = fid ? [ae.selectionStart, ae.selectionEnd] : null;
+  renderNow();
+  if (fid) { const el = document.getElementById(fid); if (el && el !== document.activeElement) { el.focus(); try { el.setSelectionRange(sel[0], sel[1]); } catch {} } }
+}
+function renderNow() {
+  renderSync();
+  if (view === "inicio") renderInicio();
+  else if (view === "calendario") renderCalendario();
+  else if (view === "novidades") renderNovidades();
+  else if (view === "explorar") renderExplorar();
+  else if (view === "lista") renderLista();
+  else if (view === "titulo") renderTitulo(titleId);
+}
+
+/* ---------------- status do agente ---------------- */
+function renderSync() {
+  const el = $("#synctxt"); if (!el) return;
+  if (!STATUS || !STATUS.lastRun) { el.textContent = "Catálogo carregando"; return; }
+  const last = Date.parse(STATUS.lastRun), next = last + (STATUS.every || 12) * 36e5;
+  el.textContent = "Atualizado " + ago(last) + (next > now() ? " · próxima " + ago(next) : " · atualizando");
+}
+
+/* ---------------- INÍCIO ---------------- */
+let heroIx = 0, heroTimer = 0;
+function heroHTML(list) {
+  if (!list.length) return "";
+  const it = list[heroIx % list.length];
+  const s = airState(it);
+  const nextTxt = s && s.next ? `<span class="nextep">Próximo: <b>EP ${s.aired + 1}</b> ${esc(whenText(s.next))}</span>` : s && s.aired ? `<span class="nextep">Disponível até o <b>EP ${s.aired}</b></span>` : "";
+  const tags = [];
+  if (it.dub === 2) tags.push('<span class="pill dub">Dublado PT-BR</span>'); else if (it.dub === 1) tags.push('<span class="pill dubsoon">Dublagem PT-BR anunciada</span>');
+  if (hasLeg(it)) tags.push('<span class="pill leg">Legendado PT-BR</span>');
+  if (it.hot) tags.push(`<span class="pill live">#${it.hot} em alta</span>`);
+  return `<div class="hero" aria-roledescription="destaque">
+    <div class="art" data-artfor="${esc(it.id)}">${poster(it, { wide: true, nobadge: true }).replace('class="poster wide"', 'class="poster wide" style="--h:' + hueOf(it) + ';position:absolute;inset:0;height:100%;border-radius:0;aspect-ratio:auto"')}${artImg(it)}</div>
+    <div class="shade"></div>
+    <div class="in">
+      <div class="meta">${tags.join("")}</div>
+      <h1>${esc(it.t)}</h1>
+      <div class="meta">${esc(metaLine(it))}${it.stu ? " · " + esc(it.stu) : ""}</div>
+      ${it.syn ? `<p class="syn">${esc(it.syn)}</p>` : ""}
+      ${nextTxt}
+      <div class="ctas">
+        ${freeCount(it) ? `<button class="btn primary" data-watch="${esc(it.id)}">${ICON.play}Assistir grátis · EP ${freeNext(it)}</button><button class="btn ghost" data-open="${esc(it.id)}">Ver episódios</button>` : `<button class="btn primary" data-open="${esc(it.id)}">${ICON.play}Ver episódios</button>`}
+        <button class="btn ghost" data-list="${esc(it.id)}" aria-pressed="${inList(it.id)}">${inList(it.id) ? ICON.check + "Na minha lista" : ICON.plus + "Minha lista"}</button>
+      </div>
+    </div>
+    <div class="pager">${list.map((_, i) => `<button data-hero="${i}" aria-label="Destaque ${i + 1}" aria-current="${i === heroIx % list.length}"></button>`).join("")}</div>
+  </div>`;
+}
+function artImg(it) { const m = Media.peek(it); const src = m && (m.banner || m.cover); return src ? imgTag(src, "bn" + (m.banner ? "" : " blur")) : ""; }
+function fillArt(it) {
+  if (!MEDIA_ON) return;
+  Media.get(it, 1, 50).then((m) => {
+    if (!m) return;
+    $$(`[data-artfor="${CSS.escape(it.id)}"]`).forEach((a) => { if (!a.querySelector("img.bn")) a.insertAdjacentHTML("beforeend", artImg(it)); });
+    $$(`[data-coverfor="${CSS.escape(it.id)}"]`).forEach((p) => { if (m.cover && !p.querySelector("img")) p.insertAdjacentHTML("beforeend", imgTag(m.cover)); });
+  });
+}
+function renderInicio() {
+  const v = $("#v-inicio");
+  if (!ITEMS.length) { v.innerHTML = `<div class="wrap section"><div class="empty">O catálogo está carregando. Os títulos, episódios e dublagens aparecem aqui em instantes.</div></div>`; return; }
+  const feat = featured();
+  const cont = Object.entries(ME.prog).sort((a, b) => (b[1].at || 0) - (a[1].at || 0)).map(([id, p]) => [BY.get(id), p]).filter(([x]) => x).slice(0, 12);
+  const recent = recentEps(96);
+  const hot = ITEMS.filter((x) => x.hot).sort((a, b) => a.hot - b.hot).slice(0, 10);
+  const dubs = [...ITEMS.filter((x) => x.dub === 1), ...ITEMS.filter((x) => x.dub === 2 && x.st === "airing"), ...ITEMS.filter((x) => x.dub === 2 && x.st !== "airing").sort(byScore)].slice(0, 20);
+  const season = airing().filter((x) => x.air).sort((a, b) => (a.hot || 99) - (b.hot || 99) || byScore(a, b));
+  const soon = ITEMS.filter((x) => x.st === "upcoming" || x.st === "season").sort((a, b) => (a.y || 9999) - (b.y || 9999) || byScore(a, b)).slice(0, 20);
+  const movies = ITEMS.filter((x) => x.tp === "MOVIE" && x.st === "finished").sort((a, b) => (b.y || 0) - (a.y || 0) || byScore(a, b)).slice(0, 20);
+  const classics = ITEMS.filter((x) => x.st === "finished" && x.sc && x.tp !== "MOVIE").sort(byScore).slice(0, 20);
+  const gen = (g) => ITEMS.filter((x) => (x.g || []).includes(g) && x.sc).sort(byScore).slice(0, 18);
+  const dubFirst = ME.prefs.audio === "dub";
+  const freeList = ITEMS.filter((x) => hasFree(x)).sort((a, b) => (b.st === "airing") - (a.st === "airing") || freeCount(b) - freeCount(a) || byScore(a, b));
+  const freeSub = (x) => {
+    const parts = [];
+    if (freeCount(x)) parts.push(`${freeCount(x)} ep${freeCount(x) > 1 ? "s" : ""} no player`);
+    const pl = [...new Set(freeSrc(x).filter((s) => regOk(s.reg)).map((s) => (FREE[s.p] || FREE.other).n))];
+    if (pl.length) parts.push(pl.join(", "));
+    return parts.join(" · ");
+  };
+  const freeRail = rail("gratis", "Assista grátis agora", "Episódios oficiais e gratuitos: no player do Sakuga e nas plataformas grátis", freeList.slice(0, 24), { more: "gratis", card: (x) => ({ sub: freeSub(x) }) });
+  const dubRail = rail("dub", "Dublagem PT-BR", "Dublagens novas, anunciadas e os dublados mais vistos", dubs, { more: "dub" });
+  v.innerHTML = [
+    `<div id="herobox">${heroHTML(feat)}</div>`,
+    freeRail,
+    cont.length ? rail("cont", "Continuar assistindo", "", cont.map(([x]) => x), { card: (x) => { const p = ME.prog[x.id]; return { sub: `EP ${p.ep || 1}`, prog: p.d ? Math.min(1, p.t / p.d) : 0 }; } }) : "",
+    recent.length ? rail("novos", "Saiu agora", "Episódios lançados nos últimos 4 dias", recent.map(([, x]) => x), { wide: true, card: (x) => { const s = airState(x); return { wide: true, sub: `EP ${s.aired} · ${ago(lastEpAt(x))}` }; } }) : "",
+    dubFirst ? dubRail : "",
+    rail("alta", "Em alta nesta temporada", "Ranking semanal da temporada de outono de 2026", hot, { rank: true }),
+    rail("temporada", "Temporada de outono 2026", "Toda semana tem episódio novo. Veja os horários no Calendário.", season, { more: "temporada" }),
+    dubFirst ? "" : dubRail,
+    rail("breve", "Próximas estreias", "Anunciados para os próximos meses", soon, { more: "breve" }),
+    rail("filmes", "Filmes", "Do cinema para a sua lista", movies, { more: "filmes" }),
+    rail("aclamados", "Aclamados de todos os tempos", "As maiores notas, somadas de várias bases", classics, { more: "aclamados" }),
+    rail("g-acao", "Ação sem pausa", "", gen("acao"), { more: "g:acao" }),
+    rail("g-romance", "Romance", "", gen("romance"), { more: "g:romance" }),
+    rail("g-fantasia", "Fantasia e isekai", "", gen("fantasia"), { more: "g:fantasia" }),
+    rail("g-esportes", "Esportes", "", gen("esportes"), { more: "g:esportes" }),
+    footer(),
+  ].join("");
+  clearInterval(heroTimer);
+  if (feat.length > 1 && !matchMedia("(prefers-reduced-motion: reduce)").matches) heroTimer = setInterval(() => { if (view !== "inicio" || document.hidden) return; heroIx++; const hb = $("#herobox"); if (hb) { hb.innerHTML = heroHTML(feat); fillArt(feat[heroIx % feat.length]); } }, 9000);
+  if (feat.length) { fillArt(feat[heroIx % feat.length]); feat.forEach((x, i) => setTimeout(() => fillArt(x), 400 * (i + 1))); }
+}
+function footer() {
+  return `<footer class="wrap foot">${!FRAMED && !IS_APP ? '<span><a class="btn sm" href="sakuga.apk" download>Baixar o app Android (APK)</a></span>' : ""}<span>O Sakuga organiza episódios, horários, dublagens e legendas e leva você às plataformas oficiais onde cada anime está disponível. Nenhum vídeo de terceiros é hospedado aqui; o Sakuga Player toca apenas arquivos do seu próprio aparelho.</span><span>Dados: anime-offline-database, LiveChart, Crunchyroll, Netflix e imprensa especializada, revisados pelo agente de atualização a cada 12 horas.</span></footer>`;
+}
+
+/* ---------------- CALENDÁRIO ---------------- */
+let calDay = 0, calFilter = "todos";
+function epsOnDay(d0) {
+  const d1 = d0 + DAY, out = [];
+  for (const it of airing()) {
+    const s = airState(it, d0); if (!s) continue;
+    if (s.weekly) { const nx = s.next; if (nx >= d0 && nx < d1) out.push({ it, n: null, at: nx, approx: true }); continue; }
+    const max = s.total || 200;
+    for (let n = 1; n <= max; n++) {
+      const at = s.epDate(n); if (at >= d1) break;
+      if (at >= d0 && !(it.air.hold && at > now())) out.push({ it, n, at, approx: s.approx });
+    }
+  }
+  return out.sort((a, b) => a.at - b.at);
+}
+function renderCalendario() {
+  const v = $("#v-calendario");
+  const t = new Date(); const today = new Date(t.getFullYear(), t.getMonth(), t.getDate()).getTime();
+  const days = Array.from({ length: 10 }, (_, i) => today + (i - 3) * DAY);
+  if (calDay < -3 || calDay > 6) calDay = 0;
+  const sel = today + calDay * DAY;
+  let slots = epsOnDay(sel);
+  if (calFilter === "dub") slots = slots.filter((s) => s.it.dub);
+  if (calFilter === "lista") slots = slots.filter((s) => inList(s.it.id));
+  const tnow = now();
+  const dayBtns = days.map((d, i) => { const n = epsOnDay(d).length; const lab = i === 3 ? "Hoje" : i === 2 ? "Ontem" : i === 4 ? "Amanhã" : fmtWD.format(new Date(d)).replace(".", ""); return `<button class="day" data-day="${i - 3}" aria-pressed="${i - 3 === calDay}"><small>${lab}</small><b class="num">${new Date(d).getDate()}</b><em>${n} ep${n === 1 ? "" : "s"}</em></button>`; }).join("");
+  const rows = slots.map(({ it, n, at, approx }) => {
+    const past = at <= tnow, live = past && tnow - at < 3 * 36e5;
+    const tags = [];
+    if (live) tags.push('<span class="pill new">Novo</span>');
+    if (it.dub === 2) tags.push('<span class="pill dub">DUB</span>'); else if (it.dub === 1) tags.push('<span class="pill dubsoon">DUB em breve</span>');
+    if (hasLeg(it)) tags.push('<span class="pill leg">LEG</span>');
+    const state = past ? ((it.yt || {})[n] ? "Grátis no Sakuga" : "Lançado") : `Em <span class="countdown" data-cd="${at}">${countdown(at)}</span>`;
+    return `<button class="slot${past ? " past" : ""}${live ? " now" : ""}" data-open="${esc(it.id)}"><span class="time">${fmtT.format(new Date(at))}${approx ? "<small>aprox.</small>" : ""}</span>${poster(it, { nobadge: true })}<span class="info"><b>${esc(it.t)}</b><span>${n ? "Episódio " + n + (it.air && it.air.total ? " de " + it.air.total : "") : "Novo episódio"} · ${state}</span></span><span class="tags">${tags.join("")}</span></button>`;
+  }).join("");
+  v.innerHTML = `<div class="wrap section">
+    <div class="sec-h"><div><h2>Calendário de lançamentos</h2><p>Horários no seu fuso (${esc(Intl.DateTimeFormat().resolvedOptions().timeZone || "local")}). O simulcast legendado sai no horário do Japão; a dublagem chega depois.</p></div></div>
+    <div class="days" role="group" aria-label="Dia">${dayBtns}</div>
+    <div class="filters" role="group" aria-label="Filtro">
+      ${[["todos", "Todos"], ["dub", "Com dublagem"], ["lista", "Minha lista"]].map(([k, l]) => `<button class="chip" data-calf="${k}" aria-pressed="${calFilter === k}">${l}</button>`).join("")}
+      <span class="count">${slots.length} episódio${slots.length === 1 ? "" : "s"} em ${esc(fmtDW.format(new Date(sel)))}</span>
+    </div>
+    <div class="slots">${rows || `<div class="empty">Nenhum episódio programado para este dia${calFilter !== "todos" ? " com este filtro" : ""}.</div>`}</div>
+  </div>${footer()}`;
+}
+function tickCountdowns() { $$("[data-cd]").forEach((el) => (el.textContent = countdown(+el.dataset.cd))); }
+
+/* ---------------- NOVIDADES ---------------- */
+let feedFilter = "todos";
+function allFeed() {
+  const out = FEED.map((f) => ({ ...f, t: Date.parse(f.at) || 0 }));
+  const seen = new Set(out.map((f) => f.k + f.id + (f.ep || "")));
+  for (const [at, it] of recentEps(24 * 7)) {
+    const s = airState(it); if (s.weekly) continue;
+    const key = "ep" + it.id + s.aired;
+    if (!seen.has(key)) out.push({ k: "ep", id: it.id, ep: s.aired, t: at, txt: `Episódio ${s.aired}${s.total ? " de " + s.total : ""} lançado${(it.yt || {})[s.aired] ? "; grátis para assistir no Sakuga" : ""}.` });
+  }
+  return out.filter((f) => f.t <= now() + 30 * DAY).sort((a, b) => b.t - a.t);
+}
+function renderNovidades() {
+  const v = $("#v-novidades");
+  let list = allFeed();
+  const groups = { gratis: ["gratis"], ep: ["ep"], dub: ["dub", "leg"], estreia: ["estreia", "temporada", "anuncio"], filme: ["filme", "lancamento"] };
+  if (feedFilter !== "todos") list = list.filter((f) => groups[feedFilter].includes(f.k));
+  const st = STATUS || {};
+  const last = st.lastRun ? Date.parse(st.lastRun) : null;
+  const next = last ? last + (st.every || 12) * 36e5 : null;
+  const rows = list.slice(0, 120).map((f) => {
+    const it = BY.get(f.id);
+    const title = it ? it.t : f.title || "Anime";
+    return `<button class="fi" ${it ? `data-open="${esc(it.id)}"` : "disabled"}>${it ? poster(it, { nobadge: true }) : '<span></span>'}<span class="txt"><span class="kind k-${esc(f.k)}">${esc(KIND[f.k] || "Atualização")}</span><b>${esc(title)}</b><span>${esc(f.txt || "")}</span></span><time datetime="${new Date(f.t).toISOString()}">${esc(ago(f.t))}</time></button>`;
+  }).join("");
+  v.innerHTML = `<div class="wrap section">
+    <div class="sec-h"><div><h2>Novidades</h2><p>Tudo o que o agente encontrou: episódios, dublagens, legendas, temporadas e filmes.</p></div></div>
+    <div class="agentbox" aria-label="Agente de atualização">
+      <div class="stats">
+        <div><b class="num">${last ? esc(ago(last).replace("há ", "")) : "—"}</b><span>desde a última busca</span></div>
+        <div><b class="num">${next ? (next > now() ? esc(countdown(next)) : "agora") : "—"}</b><span>até a próxima</span></div>
+        <div><b class="num">${ITEMS.length}</b><span>títulos no catálogo</span></div>
+        <div><b class="num">${airing().length}</b><span>em exibição</span></div>
+        <div><b class="num">${ITEMS.filter((x) => x.dub).length}</b><span>com dublagem PT-BR</span></div>
+      </div>
+      ${st.log ? `<p>${esc(st.log)}</p>` : ""}
+      <p>Fonte dos dados: ${esc(SOURCE === "banco" ? "banco do Sakuga, atualizado pelo agente" : "catálogo publicado com o app")}${st.base ? " · base " + esc(st.base) : ""}.</p>
+    </div>
+    <div class="filters" role="group" aria-label="Tipo de novidade">${[["todos", "Tudo"], ["gratis", "Grátis"], ["ep", "Episódios"], ["dub", "Dublagem e legenda"], ["estreia", "Estreias e temporadas"], ["filme", "Filmes e lançamentos"]].map(([k, l]) => `<button class="chip" data-feedf="${k}" aria-pressed="${feedFilter === k}">${l}</button>`).join("")}</div>
+    <div class="feed">${rows || '<div class="empty">Nada novo neste filtro por enquanto. O agente volta a procurar a cada 12 horas.</div>'}</div>
+  </div>${footer()}`;
+}
+
+/* ---------------- EXPLORAR ---------------- */
+const EX = { q: "", tp: "", st: "", dub: false, free: false, g: "", sort: "rel", n: 48 };
+function applyMore(key) {
+  Object.assign(EX, { q: "", tp: "", st: "", dub: false, free: false, g: "", sort: "rel", n: 48 });
+  if (key === "dub") { EX.dub = true; EX.sort = "rel"; }
+  else if (key === "gratis") { EX.free = true; }
+  else if (key === "temporada") EX.st = "airing";
+  else if (key === "breve") EX.st = "upcoming";
+  else if (key === "filmes") { EX.tp = "MOVIE"; EX.sort = "new"; }
+  else if (key === "aclamados") EX.sort = "score";
+  else if (key.startsWith("g:")) { EX.g = key.slice(2); EX.sort = "score"; }
+  const qi = $("#qtop"); if (qi) qi.value = "";
+  go("explorar");
+}
+function searchIndex(it) { return it._ix || (it._ix = norm([it.t, it.r, it.en, it.stu, ...(it.g || []).map((g) => GENRE_LABEL[g] || g)].join(" "))); }
+function filtered() {
+  const q = norm(EX.q).trim(); const words = q.split(/\s+/).filter(Boolean);
+  let list = ITEMS.filter((it) => {
+    if (EX.tp && it.tp !== EX.tp) return false;
+    if (EX.st === "airing" && it.st !== "airing") return false;
+    if (EX.st === "upcoming" && !(it.st === "upcoming" || it.st === "season")) return false;
+    if (EX.st === "finished" && it.st !== "finished") return false;
+    if (EX.dub && !it.dub) return false;
+    if (EX.free && !hasFree(it)) return false;
+    if (EX.g && !(it.g || []).includes(EX.g)) return false;
+    if (words.length) { const ix = searchIndex(it); return words.every((w) => ix.includes(w)); }
+    return true;
+  });
+  const rel = (it) => (hasFree(it) ? 25 : 0) + (it.st === "airing" ? 30 : 0) + (it.hot ? 40 - it.hot : 0) + (it.dub ? 6 : 0) + (it.sc || 0) * 2 + (it.syn ? 3 : 0) + (q && norm(it.t).startsWith(q) ? 50 : 0);
+  if (EX.sort === "score") list.sort(byScore);
+  else if (EX.sort === "new") list.sort((a, b) => (b.y || 0) - (a.y || 0) || byScore(a, b));
+  else if (EX.sort === "az") list.sort((a, b) => a.t.localeCompare(b.t, "pt-BR"));
+  else list.sort((a, b) => rel(b) - rel(a));
+  return list;
+}
+function renderExplorar(keepFocus) {
+  const v = $("#v-explorar");
+  const list = filtered();
+  const gens = Object.keys(GENRE_LABEL).filter((g) => ITEMS.some((x) => (x.g || []).includes(g)));
+  const chip = (k, val, label) => `<button class="chip" data-ex="${k}" data-val="${val}" aria-pressed="${String(EX[k]) === String(val)}">${label}</button>`;
+  v.innerHTML = `<div class="wrap section">
+    <label class="bigsearch"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><span class="sr">Buscar</span><input id="qex" type="search" placeholder="Título em português, inglês ou japonês, estúdio ou gênero" value="${esc(EX.q)}" autocomplete="off"></label>
+    <div class="filters" role="group" aria-label="Filtros">
+      ${chip("tp", "", "Tudo")}${chip("tp", "TV", "Séries")}${chip("tp", "MOVIE", "Filmes")}${chip("tp", "ONA", "Web")}
+      <button class="chip" data-ex="free" data-val="${!EX.free}" aria-pressed="${EX.free}">Grátis no Sakuga</button>
+      <button class="chip" data-ex="dub" data-val="${!EX.dub}" aria-pressed="${EX.dub}">Dublado PT-BR</button>
+      <select class="select" id="exst" aria-label="Situação"><option value="">Qualquer situação</option><option value="airing"${EX.st === "airing" ? " selected" : ""}>Em exibição</option><option value="upcoming"${EX.st === "upcoming" ? " selected" : ""}>Em breve</option><option value="finished"${EX.st === "finished" ? " selected" : ""}>Completos</option></select>
+      <select class="select" id="exg" aria-label="Gênero"><option value="">Todos os gêneros</option>${gens.map((g) => `<option value="${g}"${EX.g === g ? " selected" : ""}>${esc(GENRE_LABEL[g])}</option>`).join("")}</select>
+      <select class="select" id="exsort" aria-label="Ordenar"><option value="rel">Mais relevantes</option><option value="score"${EX.sort === "score" ? " selected" : ""}>Maior nota</option><option value="new"${EX.sort === "new" ? " selected" : ""}>Mais recentes</option><option value="az"${EX.sort === "az" ? " selected" : ""}>A–Z</option></select>
+      <span class="count">${list.length} título${list.length === 1 ? "" : "s"}</span>
+    </div>
+    <div class="grid">${list.slice(0, EX.n).map((x) => card(x)).join("") || '<div class="empty" style="grid-column:1/-1">Nenhum anime com esses filtros. Tente outro nome ou limpe os filtros.</div>'}</div>
+    ${list.length > EX.n ? `<div style="display:grid;place-items:center;margin-top:24px"><button class="btn" id="exmore">Mostrar mais ${Math.min(48, list.length - EX.n)}</button></div>` : ""}
+  </div>${footer()}`;
+  if (keepFocus) { const i = $("#qex"); i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
+}
+
+/* ---------------- MINHA LISTA ---------------- */
+function renderLista() {
+  const v = $("#v-lista");
+  const mine = ME.list.map((id) => BY.get(id)).filter(Boolean);
+  const cont = Object.entries(ME.prog).sort((a, b) => (b[1].at || 0) - (a[1].at || 0)).map(([id]) => BY.get(id)).filter(Boolean);
+  const airingMine = mine.filter((x) => x.st === "airing");
+  v.innerHTML = `<div class="wrap section"><div class="sec-h"><div><h2>Minha lista</h2><p>${mine.length ? `${mine.length} título${mine.length === 1 ? "" : "s"}${airingMine.length ? ` · ${airingMine.length} em exibição` : ""}` : "Salve animes para acompanhar episódios novos e dublagens."}</p></div></div>
+    ${mine.length ? `<div class="grid">${mine.map((x) => { const s = airState(x); return card(x, { sub: s && s.next ? "Próximo " + whenText(s.next) : metaLine(x) }); }).join("")}</div>` : `<div class="empty">Sua lista está vazia. Toque em <b>Minha lista</b> na página de qualquer anime para salvá-lo aqui. Os lançamentos dele aparecem no Calendário com o filtro Minha lista.</div>`}
+  </div>${cont.length ? rail("lcont", "Continuar assistindo", "", cont, { card: (x) => { const p = ME.prog[x.id]; return { sub: "EP " + (p.ep || 1), prog: p.d ? Math.min(1, p.t / p.d) : 0 }; } }) : ""}${footer()}`;
+}
+
+/* ---------------- TÍTULO ---------------- */
+let epRange = 0, epFor = null;
+function renderTitulo(id) {
+  const v = $("#v-titulo");
+  const it = BY.get(id);
+  if (!it) { v.innerHTML = `<div class="wrap section"><div class="empty">${ITEMS.length ? "Este anime não está mais no catálogo." : "Carregando o anime…"}</div></div>`; return; }
+  const s = airState(it);
+  const q = encodeURIComponent(it.en || it.r || it.t);
+  const fe = freeEps(it), fk = freeKinds(it);
+  const audio = [];
+  audio.push(["Áudio original", "Japonês" + (it.tp === "ONA" && /chin|donghua|quanzhi|douluo/i.test(it.r) ? " ou chinês" : "")]);
+  audio.push(["Dublagem PT-BR", it.dub === 2 ? '<span class="pill dub">Disponível</span>' : it.dub === 1 ? '<span class="pill dubsoon">Anunciada, sem data</span>' : "Sem anúncio até agora"]);
+  audio.push(["Legendas", hasLeg(it) ? "Português (BR)" : "PT-BR não confirmada"]);
+  audio.push(["Grátis no Sakuga", fe.length ? `${fe.length} episódio${fe.length > 1 ? "s" : ""} (${[...fk].map((k) => (KLONG[k] || k).toLowerCase()).join(", ")})` : freeSrc(it).length ? "Nas plataformas grátis ao lado" : "Nenhum episódio oficial gratuito ainda"]);
+  const fich = [["Tipo", TYPE_LABEL[it.tp] || it.tp], ["Situação", statusText(it)], ["Episódios", it.st === "airing" && s && !s.weekly ? `${s.aired} de ${s.total || "?"}` : it.aired || it.eps || "—"], it.dur ? ["Duração", it.dur + " min" + (it.tp === "MOVIE" ? "" : " por episódio")] : null, ["Temporada", seasonText(it) || "—"], it.stu ? ["Estúdio", it.stu] : null, it.sc ? ["Nota média", it.sc.toFixed(1) + " / 10"] : null, ["Atualizado", it.upd ? ago(Date.parse(it.upd)) : "—"]].filter(Boolean);
+  const links = [it.al && ["AniList", "https://anilist.co/anime/" + it.al], it.mal && ["MyAnimeList", "https://myanimelist.net/anime/" + it.mal], it.lc && ["LiveChart", "https://www.livechart.me/anime/" + it.lc]].filter(Boolean);
+  const fam = ITEMS.filter((x) => x.fr === it.fr && x.id !== it.id).sort((a, b) => (a.y || 9999) - (b.y || 9999));
+  const sim = ITEMS.filter((x) => x.id !== it.id && x.fr !== it.fr && (x.g || []).filter((g) => (it.g || []).includes(g)).length >= 2).sort(byScore).slice(0, 16);
+  const nextBox = s && s.next ? `<span class="nextep" style="display:inline-flex;gap:8px;align-items:center;font-size:14px">Episódio ${s.aired + 1} ${esc(whenText(s.next))} · <span class="countdown" data-cd="${s.next}">${countdown(s.next)}</span>${s.approx ? " · horário aproximado" : ""}</span>` : "";
+  const sub = [it.en && it.en !== it.t ? it.en : "", it.r !== it.t && it.r !== it.en ? it.r : ""].filter(Boolean).join(" · ");
+  v.innerHTML = `<div class="dhead">
+    <div class="art" data-artfor="${esc(it.id)}">${poster(it, { wide: true, nobadge: true }).replace('class="poster wide"', 'class="poster wide" style="--h:' + hueOf(it) + ';position:absolute;inset:0;height:100%;border-radius:0;aspect-ratio:auto"')}${artImg(it)}</div>
+    <button class="btn sm back" id="tback">${ICON.left}Voltar</button>
+    <div class="wrap in">
+      ${poster(it).replace('class="poster"', 'class="poster" data-coverfor="' + esc(it.id) + '"')}
+      <div>
+        <h1>${esc(it.t)}</h1>
+        ${sub ? `<div class="alt">${esc(sub)}</div>` : ""}
+        <div class="meta"><span>${esc(statusText(it))}</span><span class="sep">·</span><span>${esc(metaLine(it))}</span>${it.stu ? `<span class="sep">·</span><span>${esc(it.stu)}</span>` : ""}${it.sc ? `<span class="sep">·</span><span>★ ${it.sc.toFixed(1)}</span>` : ""}</div>
+        <div class="meta">${it.dub === 2 ? '<span class="pill dub">Dublado PT-BR</span>' : it.dub === 1 ? '<span class="pill dubsoon">Dublagem PT-BR anunciada</span>' : ""}${hasLeg(it) ? '<span class="pill leg">Legendado PT-BR</span>' : ""}${hasFree(it) ? `<span class="pill free">${fe.length ? fe.length + " grátis" : "Grátis"}</span>` : ""}${(it.g || []).map((g) => `<span class="pill soft">${esc(GENRE_LABEL[g] || g)}</span>`).join("")}</div>
+        ${nextBox ? `<div style="margin-bottom:14px">${nextBox}</div>` : ""}
+        <div class="ctas">
+          ${fe.length ? `<button class="btn primary" data-watch="${esc(it.id)}">${ICON.play}Assistir grátis · EP ${freeNext(it)}</button>` : (() => { const s0 = freeSrc(it).find((s) => regOk(s.reg)); return s0 ? `<a class="btn primary" href="${esc(s0.u)}" target="_blank" rel="noopener">${ICON.play}Assistir grátis na ${esc((FREE[s0.p] || FREE.other).n)}</a>` : ""; })()}
+          <button class="btn" data-list="${esc(it.id)}" aria-pressed="${inList(it.id)}">${inList(it.id) ? ICON.check + "Na minha lista" : ICON.plus + "Minha lista"}</button>
+          <button class="btn" data-playfile="${esc(it.id)}">${ICON.file}Tocar meu arquivo</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="wrap dbody">
+    <div>
+      <p class="syn${it.syn ? "" : " dim"}">${it.syn ? esc(it.syn) : esc(autoSyn(it))}</p>
+      ${it.note ? `<p class="syn" style="color:var(--new)">${esc(it.note)}</p>` : ""}
+      ${epsHTML(it, s)}
+    </div>
+    <aside style="display:grid;gap:16px;align-content:start">
+      ${srcBox(it, fe)}
+      <div class="box"><h3>Áudio e legenda</h3><dl class="kv">${audio.map(([k, val]) => `<dt>${esc(k)}</dt><dd>${val.startsWith("<span") ? val : esc(val)}</dd>`).join("")}</dl></div>
+      <div class="box"><h3>Ficha</h3><dl class="kv">${fich.map(([k, val]) => `<dt>${esc(k)}</dt><dd class="num">${esc(val)}</dd>`).join("")}</dl><div class="links">${links.map(([l, u]) => `<a href="${u}" target="_blank" rel="noopener">${esc(l)}</a>`).join("")}</div></div>
+    </aside>
+  </div>
+  <section class="section" id="galeria" hidden aria-labelledby="h-gal"><div class="wrap sec-h"><div><h2 id="h-gal">Fotos e personagens</h2><p>Arte oficial e os personagens mais populares</p></div></div><div class="rail gal" id="galrail"></div></section>
+  ${rail("fam", "Temporadas, filmes e especiais", "Toda a franquia em ordem de lançamento", fam)}
+  ${rail("sim", "Parecidos com este", "", sim)}
+  ${footer()}`;
+  fillTitleMedia(it);
+}
+function fillTitleMedia(it) {
+  if (!MEDIA_ON) return;
+  const PAGE = 50, from = epRange * PAGE + 1, to = from + PAGE - 1;
+  Media.get(it, from, to).then((m) => {
+    if (!m || view !== "titulo" || titleId !== it.id) return;
+    fillArt(it);
+    const pics = [];
+    if (m.banner) pics.push(`<figure class="ph wide">${imgTag(m.banner, "", "Arte oficial de " + it.t)}<figcaption>Arte oficial</figcaption></figure>`);
+    if (m.cover) pics.push(`<figure class="ph">${imgTag(m.cover, "", "Capa de " + it.t)}<figcaption>Capa</figcaption></figure>`);
+    m.chars.slice(0, 12).forEach((c) => pics.push(`<figure class="ph">${imgTag(c.img, "", c.n)}<figcaption>${esc(c.n)}${c.main ? " · principal" : ""}</figcaption></figure>`));
+    const g = $("#galeria");
+    if (g && pics.length) { $("#galrail").innerHTML = pics.join(""); g.hidden = false; }
+    $$(".ep[data-n]").forEach((row) => {
+      const e = m.eps[row.dataset.n]; if (!e) return;
+      const th = row.querySelector(".thumb");
+      if (e.thumb && th && !th.querySelector("img") && !row.classList.contains("future") && !th.dataset.yt) th.insertAdjacentHTML("beforeend", imgTag(e.thumb, "", "Episódio " + row.dataset.n));
+      if (e.title) { const b = row.querySelector(".t b"); if (b && !b.dataset.full) { b.textContent = `Episódio ${row.dataset.n} · ${e.title}`; b.dataset.full = 1; } }
+    });
+  });
+}
+function srcBox(it, fe) {
+  const list = freeSrc(it).slice().sort((a, b) => regOk(b.reg) - regOk(a.reg));
+  if (!list.length && !fe.length) return `<div class="box"><h3>Assistir grátis</h3><p class="boxp">Ainda não há episódio oficial gratuito deste anime. O agente procura em plataformas grátis do Brasil e de fora a cada 12 horas, e eles aparecem aqui assim que forem encontrados.</p></div>`;
+  const rows = list.map((s) => {
+    const pl = FREE[s.p] || FREE.other, ok = regOk(s.reg);
+    const lang = s.lang === "dub" ? "Dublado PT-BR" : s.lang === "leg" ? "Legendado PT-BR" : s.lang === "en" ? "Legendado em inglês" : s.lang === "orig" ? "Áudio original, sem legenda PT" : "";
+    return `<a class="srcrow${ok ? "" : " far"}" href="${esc(s.u)}" target="_blank" rel="noopener" data-src="${esc(s.p)}"><b>${esc(pl.n)}</b><span>${[s.eps ? "Episódios " + esc(s.eps) : "", lang, esc(REG[s.reg] || s.reg || "")].filter(Boolean).join(" · ")}${s.note ? " · " + esc(s.note) : ""}</span></a>`;
+  }).join("");
+  return `<div class="box"><h3>Assistir grátis</h3>${fe.length ? `<p class="boxp">${fe.length} episódio${fe.length > 1 ? "s" : ""} toca${fe.length > 1 ? "m" : ""} aqui no player do Sakuga (lista de episódios).</p>` : ""}${rows ? `<div class="srcs">${rows}</div><p class="boxp">${IS_APP ? "Abre dentro do app." : "Abre o site oficial da plataforma."} As marcadas como “Só no …” só tocam naquele país.</p>` : ""}</div>`;
+}
+function autoSyn(it) {
+  const g = (it.g || []).slice(0, 3).map((x) => (GENRE_LABEL[x] || x).toLowerCase());
+  const kind = it.tp === "MOVIE" ? "Filme" : it.tp === "ONA" ? "Série para web" : "Série";
+  return `${kind}${g.length ? " de " + g.join(", ") : ""}${it.stu ? " do estúdio " + it.stu : ""}${seasonText(it) ? ", " + seasonText(it) : ""}. A sinopse em português ainda está sendo preparada pelo agente de atualização.`;
+}
+function epsHTML(it, s) {
+  if (it.tp === "MOVIE") return "";
+  let count = 0, upcoming = 0;
+  if (s && !s.weekly) { count = s.aired; upcoming = s.next ? Math.min(3, (s.total || s.aired + 3) - s.aired) : 0; }
+  else count = it.aired || it.eps || 0;
+  const maxFree = Math.max(0, ...freeEps(it));
+  if (maxFree > count) count = maxFree;
+  if (!count && !upcoming) return it.st === "upcoming" || it.st === "season" ? `<div class="empty">Ainda sem episódios. A estreia está prevista para ${esc(seasonText(it) || "breve")}; o agente avisa quando houver data.</div>` : "";
+  const total = count + upcoming, PAGE = 50;
+  const pages = Math.ceil(total / PAGE);
+  if (epFor !== it.id) { epFor = it.id; epRange = Math.max(0, Math.ceil(Math.max(count, 1) / PAGE) - 1); }
+  if (epRange >= pages) epRange = pages - 1;
+  const seen = new Set(ME.seen[it.id] || []);
+  const from = epRange * PAGE + 1, to = Math.min(total, from + PAGE - 1);
+  const rows = [];
+  for (let n = from; n <= to; n++) {
+    const at = s && !s.weekly ? s.epDate(n) : null;
+    const fut = n > count, nx = fut && n === count + 1;
+    const p = ME.prog[it.id];
+    const when = at ? (fut ? whenText(at) : fmtD.format(new Date(at))) : "";
+    const mc = Media.peek(it), me = mc && mc.eps[n];
+    rows.push(`<div class="ep${fut ? " future" : ""}${nx ? " next" : ""}${seen.has(n) ? " seen" : ""}" data-n="${n}"><span class="thumb" style="--h:${(hueOf(it) + n * 9) % 360}"${!fut && (it.yt || {})[n] ? ` data-yt="1" role="button" tabindex="0" data-watch="${esc(it.id)}" data-ep="${n}"` : ""}><span class="no">${String(n).padStart(2, "0")}</span>${!fut && (it.yt || {})[n] && !NOIMG ? imgTag("https://i.ytimg.com/vi/" + it.yt[n][0].v + "/hqdefault.jpg", "", "Episódio " + n) : me && me.thumb && !fut ? imgTag(me.thumb, "", "Episódio " + n) : ""}${!fut && (it.yt || {})[n] ? '<span class="playov">' + ICON_FREE + "</span>" : ""}${p && p.ep === n && p.d ? `<i class="eprog" style="width:${Math.round(Math.min(1, p.t / p.d) * 100)}%"></i>` : ""}</span><span class="t"><b>${me && me.title ? `Episódio ${n} · ${esc(me.title)}` : `Episódio ${n}`}</b><span>${!fut && (it.yt || {})[n] ? '<i class="freetag">Grátis no Sakuga</i> · ' + (it.yt[n][0].x ? "vídeo com os eps " + esc(it.yt[n][0].x) + " · " : "") + (it.yt[n][0].ate ? "até " + fmtAte(it.yt[n][0].ate) + " · " : "") : ""}${fut ? (nx ? `Estreia ${esc(when)} · <span class="countdown" data-cd="${at}">${countdown(at)}</span>` : `Previsto ${esc(when)}`) : (when ? "Lançado em " + esc(when) : (it.yt || {})[n] ? "Toca aqui no Sakuga" : "Lançado · sem versão grátis oficial ainda")}${p && p.ep === n && p.d ? ` · parou em ${fmtClock(p.t)}` : ""}</span></span><span class="acts">${!fut && (it.yt || {})[n] ? (it.yt[n].map((v) => `<button class="btn sm ${v.k === "dub" ? "primary" : ""} epplay" data-watch="${esc(it.id)}" data-ep="${n}" data-kind="${v.k}" aria-label="Assistir episódio ${n} ${(KLONG[v.k] || "").toLowerCase()}">${ICON_FREE}${KLABEL[v.k] || "Assistir"}</button>`).join("")) : ""}${fut ? "" : `<button class="check" data-seen="${esc(it.id)}" data-ep="${n}" aria-pressed="${seen.has(n)}" aria-label="Marcar episódio ${n} como assistido">${ICON.check}</button>`}</span></div>`);
+  }
+  const ranges = pages > 1 ? `<div class="ranges">${Array.from({ length: pages }, (_, i) => `<button class="chip" data-range="${i}" aria-pressed="${i === epRange}">${i * PAGE + 1}–${Math.min(total, (i + 1) * PAGE)}</button>`).join("")}</div>` : "";
+  const fc = freeCount(it);
+  return `<div class="eps-h"><h2>Episódios</h2><span class="count">${count} lançado${count === 1 ? "" : "s"}${s && s.total ? " de " + s.total : ""}${fc ? ` · ${fc} grátis no Sakuga` : ""}</span></div>${ranges}<div class="eps" style="margin-top:12px">${rows.join("")}</div>`;
+}
+function fmtClock(sec) { sec = Math.max(0, Math.floor(sec || 0)); const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60; return (h ? h + ":" + String(m).padStart(2, "0") : m) + ":" + String(s).padStart(2, "0"); }
+
+/* ---------------- interações ---------------- */
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("button, a, [data-watch]"); if (!t) return;
+  if (t.dataset.go) { go(t.dataset.go); return; }
+  if (t.dataset.open) { openTitle(t.dataset.open); return; }
+  if (t.dataset.list) { toggleList(t.dataset.list); return; }
+  if (t.dataset.more) { applyMore(t.dataset.more); return; }
+  if (t.dataset.scroll) { const r = t.parentElement.querySelector(".rail"); r.scrollBy({ left: Number(t.dataset.scroll) * r.clientWidth * 0.85, behavior: "smooth" }); return; }
+  if (t.dataset.hero) { heroIx = Number(t.dataset.hero); const hb = $("#herobox"); if (hb) { const f = featured(); hb.innerHTML = heroHTML(f); fillArt(f[heroIx % f.length]); } return; }
+  if (t.dataset.day != null) { calDay = Number(t.dataset.day); renderCalendario(); return; }
+  if (t.dataset.calf) { calFilter = t.dataset.calf; renderCalendario(); return; }
+  if (t.dataset.feedf) { feedFilter = t.dataset.feedf; renderNovidades(); return; }
+  if (t.dataset.ex) { const k = t.dataset.ex; EX[k] = k === "dub" || k === "free" ? t.dataset.val === "true" : t.dataset.val; EX.n = 48; renderExplorar(); return; }
+  if (t.dataset.range != null) { epRange = Number(t.dataset.range); renderTitulo(titleId); return; }
+  if (t.dataset.seen) {
+    const id = t.dataset.seen, n = Number(t.dataset.ep); const set = new Set(ME.seen[id] || []);
+    if (set.has(n)) set.delete(n); else set.add(n);
+    ME.seen[id] = [...set]; saveMe();
+    t.setAttribute("aria-pressed", set.has(n)); t.closest(".ep").classList.toggle("seen", set.has(n)); return;
+  }
+  if (t.dataset.playfile) { Player.open(BY.get(t.dataset.playfile)); return; }
+  if (t.dataset.watch) { const it = BY.get(t.dataset.watch); if (it) YTP.open(it, t.dataset.ep ? Number(t.dataset.ep) : freeNext(it), t.dataset.kind || null); return; }
+  if (t.id === "tback") { if (navDepth > 0) { navDepth--; history.back(); } else go("inicio"); return; }
+  if (t.id === "exmore") { EX.n += 48; renderExplorar(); return; }
+  if (t.id === "logo") { go("inicio"); return; }
+  if (t.id === "msearch") { go("explorar"); setTimeout(() => $("#qex") && $("#qex").focus(), 50); return; }
+  if (t.id === "openplayer") { Player.open(null); return; }
+  if (t.id === "opensettings") { openSettings(); return; }
+  if (t.id === "syncbtn") { go("novidades"); return; }
+});
+document.addEventListener("input", (e) => {
+  if (e.target.id === "qex") { EX.q = e.target.value; EX.n = 48; clearTimeout(window.__qt); window.__qt = setTimeout(() => renderExplorar(true), 120); }
+  if (e.target.id === "qtop") { EX.q = e.target.value; EX.n = 48; if (view !== "explorar") { go("explorar"); setTimeout(() => { const i = $("#qtop"); i && i.focus(); }, 30); } else renderExplorar(); }
+});
+document.addEventListener("change", (e) => {
+  const id = e.target.id;
+  if (id === "exst") { EX.st = e.target.value; renderExplorar(); }
+  if (id === "exg") { EX.g = e.target.value; renderExplorar(); }
+  if (id === "exsort") { EX.sort = e.target.value; renderExplorar(); }
+});
+
+/* ---------------- preferências ---------------- */
+function applyTheme() {
+  const r = document.documentElement;
+  if (ME.prefs.theme === "dark" || ME.prefs.theme === "light") { r.setAttribute("data-theme", ME.prefs.theme); r.dataset.sakugaSet = "1"; }
+  else if (r.dataset.sakugaSet) { r.removeAttribute("data-theme"); delete r.dataset.sakugaSet; }
+}
+function openSettings() {
+  const opt = (k, val, label) => `<button class="chip" data-pref="${k}" data-val="${val}" aria-pressed="${ME.prefs[k] === val}">${label}</button>`;
+  sheet(`<h3 id="sheett">Preferências</h3>
+    <div><p style="margin-bottom:8px">Aparência</p><div class="filters">${opt("theme", "auto", "Igual ao sistema")}${opt("theme", "dark", "Escuro")}${opt("theme", "light", "Claro")}</div></div>
+    <div><p style="margin-bottom:8px">Prefiro assistir</p><div class="filters">${opt("audio", "dub", "Dublado")}${opt("audio", "leg", "Legendado")}</div></div>
+    ${!FRAMED && !IS_APP ? '<div><a class="btn" href="sakuga.apk" download>Baixar o app Android (APK)</a></div>' : ""}
+    <p>Sua lista, o progresso dos episódios e estas escolhas ficam salvos ${meRef ? "na sua conta e neste aparelho" : "neste aparelho"}.</p>
+    <div style="display:flex;justify-content:flex-end"><button class="btn primary" data-close>Pronto</button></div>`);
+}
+function sheet(html) { const s = $("#sheet"); $("#sheetp").innerHTML = html; s.hidden = false; const f = $("#sheetp button"); f && f.focus(); }
+$("#sheet").addEventListener("click", (e) => {
+  const t = e.target;
+  if (t.id === "sheet" || t.closest("[data-close]")) { $("#sheet").hidden = true; return; }
+  const b = t.closest("[data-pref]");
+  if (b) { ME.prefs[b.dataset.pref] = b.dataset.val; saveMe(); applyTheme(); openSettings(); if (view === "inicio") renderInicio(); }
+});
+let toastT = 0;
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => (t.hidden = true), 2200); }
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#sheet").hidden) $("#sheet").hidden = true; });
+
+/* ---------------- SAKUGA PLAYER ---------------- */
+const Player = (() => {
+  const P = $("#player"), V = $("#pv"), C = $("#pc");
+  let item = null, ep = 1, cues = [], subOn = true, idleT = 0, enhance = "off", gl = null, raf = 0, saveT = 0, fileName = "", objUrl = "";
+  let subStyle = store.get("subs", { size: 100, color: "#ffffff", bg: 0.55, pos: 8 });
+  const subEl = document.createElement("div");
+  subEl.style.cssText = "position:absolute;left:5%;right:5%;text-align:center;pointer-events:none;z-index:2;font-family:var(--body);font-weight:700;line-height:1.35;text-wrap:balance";
+  P.insertBefore(subEl, $(".ui", P));
+  function styleSubs() {
+    subEl.style.bottom = subStyle.pos + "%";
+    subEl.style.fontSize = `calc(${subStyle.size / 100} * clamp(16px, 2.6vw, 34px))`;
+    subEl.style.color = subStyle.color;
+    $$("span", subEl).forEach((s) => (s.style.background = `rgba(0,0,0,${subStyle.bg})`));
+  }
+  function open(it, n) {
+    item = it || null; ep = n || (it && ME.prog[it.id] && ME.prog[it.id].ep) || 1;
+    $("#pttl").textContent = it ? it.t : "Sakuga Player";
+    $("#psub").textContent = it ? `Episódio ${ep} · escolha o arquivo deste episódio` : "Seus arquivos de vídeo, com legenda e realce de imagem";
+    P.hidden = false; document.body.style.overflow = "hidden";
+    if (!V.src) $("#pdrop").hidden = false;
+    wake();
+  }
+  function close() {
+    V.pause(); P.hidden = true; document.body.style.overflow = ""; $("#pmenu").hidden = true;
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    persist(true);
+  }
+  function load(file) {
+    if (!file) return;
+    if (objUrl) URL.revokeObjectURL(objUrl);
+    objUrl = URL.createObjectURL(file); fileName = file.name;
+    V.src = objUrl; $("#pdrop").hidden = true;
+    const m = /(?:ep?|episodio|episode|[ _-])(\d{1,4})(?!.*\d)/i.exec(file.name.replace(/\.(mp4|mkv|webm|m4v|mov)$/i, "").replace(/(1080|720|480|2160)p/gi, ""));
+    if (item && m) ep = Number(m[1]);
+    $("#psub").textContent = item ? `Episódio ${ep} · ${file.name}` : file.name;
+    V.play().catch(() => {});
+    const p = item && ME.prog[item.id];
+    V.addEventListener("loadedmetadata", () => { if (p && p.ep === ep && p.t > 10 && p.t < V.duration - 30) { V.currentTime = p.t; flash("Continuando de " + fmtClock(p.t)); } }, { once: true });
+  }
+  function parseSubs(text) {
+    const out = []; const blocks = text.replace(/\r/g, "").replace(/^WEBVTT[^\n]*\n/, "").split(/\n{2,}/);
+    const ts = (s) => { const m = /(?:(\d+):)?(\d{1,2}):(\d{2})[,.](\d{1,3})/.exec(s); return m ? (+m[1] || 0) * 3600 + +m[2] * 60 + +m[3] + +m[4].padEnd(3, "0") / 1000 : null; };
+    for (const b of blocks) {
+      const lines = b.split("\n"); const i = lines.findIndex((l) => l.includes("-->")); if (i < 0) continue;
+      const [a, z] = lines[i].split("-->"); const s = ts(a), e = ts(z); if (s == null || e == null) continue;
+      const txt = lines.slice(i + 1).join("\n").replace(/\{\\[^}]*\}/g, "").replace(/<(?!\/?(i|b)>)[^>]*>/g, "").trim();
+      if (txt) out.push({ s, e, txt });
+    }
+    return out;
+  }
+  function renderCue() {
+    if (!subOn || !cues.length) { subEl.innerHTML = ""; return; }
+    const t = V.currentTime; const on = cues.filter((c) => t >= c.s && t <= c.e);
+    const html = on.map((c) => c.txt.split("\n").map((l) => `<span style="padding:2px 8px;box-decoration-break:clone;-webkit-box-decoration-break:clone">${esc(l).replace(/&lt;(\/?)(i|b)&gt;/g, "<$1$2>")}</span>`).join("<br>")).join("<br>");
+    if (subEl.innerHTML !== html) { subEl.innerHTML = html; styleSubs(); }
+  }
+  function flash(msg) { const t = $("#ptoast"); t.textContent = msg; t.hidden = false; clearTimeout(flash.t); flash.t = setTimeout(() => (t.hidden = true), 1100); }
+  function wake() { P.classList.remove("idle"); clearTimeout(idleT); idleT = setTimeout(() => { if (!V.paused && $("#pmenu").hidden) P.classList.add("idle"); }, 2800); }
+  function update() {
+    const d = V.duration || 0, t = V.currentTime || 0, pct = d ? (t / d) * 100 : 0;
+    $("#ppl").style.width = pct + "%"; $("#pkn").style.left = pct + "%";
+    $("#pseek").setAttribute("aria-valuenow", Math.round(pct));
+    let bf = 0; for (let i = 0; i < V.buffered.length; i++) if (V.buffered.start(i) <= t) bf = V.buffered.end(i);
+    $("#pbf").style.width = (d ? (bf / d) * 100 : 0) + "%";
+    $("#ptime").textContent = fmtClock(t) + " / " + fmtClock(d);
+    $("#pskip").hidden = !(t > 3 && t < 240 && d > 600);
+    renderCue();
+    clearTimeout(saveT); saveT = setTimeout(persist, 4000);
+  }
+  function persist(force) {
+    if (!item || !V.duration || !isFinite(V.duration)) return;
+    ME.prog[item.id] = { ep, t: Math.floor(V.currentTime), d: Math.floor(V.duration), at: now() };
+    if (V.currentTime / V.duration > 0.9) { const set = new Set(ME.seen[item.id] || []); set.add(ep); ME.seen[item.id] = [...set]; }
+    saveMe();
+    if (force && view === "inicio") renderInicio();
+  }
+  function setPlayIcon() { $("#pplay").innerHTML = V.paused ? ICON.play : ICON.pause; $("#pplay").setAttribute("aria-label", V.paused ? "Reproduzir" : "Pausar"); }
+  function toggle() { if (!V.src) return; V.paused ? V.play().catch(() => {}) : V.pause(); }
+  function seekTo(clientX) { const r = $("#pseek").getBoundingClientRect(); const p = Math.min(1, Math.max(0, (clientX - r.left) / r.width)); if (V.duration) V.currentTime = p * V.duration; }
+
+  /* Realce Sakuga: nitidez adaptativa (máscara de desfoque) + vivacidade, em WebGL */
+  function initGL() {
+    if (gl) return gl;
+    const g = C.getContext("webgl", { premultipliedAlpha: false, preserveDrawingBuffer: false }); if (!g) return null;
+    const vs = "attribute vec2 p;varying vec2 uv;void main(){uv=(p+1.)*.5;uv.y=1.-uv.y;gl_Position=vec4(p,0,1);}";
+    const fs = `precision mediump float;varying vec2 uv;uniform sampler2D t;uniform vec2 px;uniform float amt;uniform float vib;
+      void main(){vec3 c=texture2D(t,uv).rgb;
+      vec3 b=(texture2D(t,uv+vec2(px.x,0.)).rgb+texture2D(t,uv-vec2(px.x,0.)).rgb+texture2D(t,uv+vec2(0.,px.y)).rgb+texture2D(t,uv-vec2(0.,px.y)).rgb)*.25;
+      vec3 d=c-b; float e=clamp(length(d)*6.,0.,1.); vec3 o=c+d*amt*(.35+.65*e);
+      float l=dot(o,vec3(.299,.587,.114)); o=mix(vec3(l),o,1.+vib); o=(o-.5)*(1.+vib*.35)+.5;
+      gl_FragColor=vec4(clamp(o,0.,1.),1.);}`;
+    const sh = (type, src) => { const s = g.createShader(type); g.shaderSource(s, src); g.compileShader(s); return s; };
+    const pr = g.createProgram(); g.attachShader(pr, sh(g.VERTEX_SHADER, vs)); g.attachShader(pr, sh(g.FRAGMENT_SHADER, fs)); g.linkProgram(pr);
+    if (!g.getProgramParameter(pr, g.LINK_STATUS)) return null;
+    g.useProgram(pr);
+    const buf = g.createBuffer(); g.bindBuffer(g.ARRAY_BUFFER, buf); g.bufferData(g.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), g.STATIC_DRAW);
+    const loc = g.getAttribLocation(pr, "p"); g.enableVertexAttribArray(loc); g.vertexAttribPointer(loc, 2, g.FLOAT, false, 0, 0);
+    const tex = g.createTexture(); g.bindTexture(g.TEXTURE_2D, tex);
+    [g.TEXTURE_WRAP_S, g.TEXTURE_WRAP_T].forEach((k) => g.texParameteri(g.TEXTURE_2D, k, g.CLAMP_TO_EDGE));
+    g.texParameteri(g.TEXTURE_2D, g.TEXTURE_MIN_FILTER, g.LINEAR); g.texParameteri(g.TEXTURE_2D, g.TEXTURE_MAG_FILTER, g.LINEAR);
+    gl = { g, u: { px: g.getUniformLocation(pr, "px"), amt: g.getUniformLocation(pr, "amt"), vib: g.getUniformLocation(pr, "vib") } };
+    return gl;
+  }
+  function draw() {
+    raf = 0;
+    if (enhance === "off" || P.hidden) return;
+    const G = gl; if (!G || V.readyState < 2) { raf = requestAnimationFrame(draw); return; }
+    const { g, u } = G;
+    const vw = V.videoWidth, vh = V.videoHeight, r = P.getBoundingClientRect();
+    const sc = Math.min(r.width / vw, r.height / vh); const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = Math.round(vw * sc * dpr), h = Math.round(vh * sc * dpr);
+    if (C.width !== w || C.height !== h) { C.width = w; C.height = h; }
+    g.viewport(0, 0, w, h);
+    try { g.texImage2D(g.TEXTURE_2D, 0, g.RGB, g.RGB, g.UNSIGNED_BYTE, V); } catch { setEnhance("off"); flash("Realce indisponível para este vídeo"); return; }
+    g.uniform2f(u.px, 1 / vw, 1 / vh);
+    g.uniform1f(u.amt, enhance === "ultra" ? 1.25 : 0.7); g.uniform1f(u.vib, enhance === "ultra" ? 0.16 : 0.08);
+    g.drawArrays(g.TRIANGLES, 0, 3);
+    raf = V.requestVideoFrameCallback ? (V.requestVideoFrameCallback(draw), 1) : requestAnimationFrame(draw);
+  }
+  function setEnhance(m) {
+    enhance = m;
+    if (m !== "off" && !initGL()) { enhance = "off"; flash("Seu aparelho não tem WebGL para o realce"); }
+    C.hidden = enhance === "off"; store.set("enh", enhance);
+    if (enhance !== "off" && !raf) draw();
+  }
+  function menu() {
+    const m = $("#pmenu");
+    if (!m.hidden) { m.hidden = true; return; }
+    const b = (grp, val, label, cur) => `<button data-${grp}="${val}" aria-pressed="${String(cur) === String(val)}">${label}</button>`;
+    m.innerHTML = `
+      <div><h4>REALCE DE IMAGEM</h4><div class="opts">${b("enh", "off", "Desligado", enhance)}${b("enh", "nitido", "Nítido", enhance)}${b("enh", "ultra", "Ultra", enhance)}</div></div>
+      <div><h4>VELOCIDADE</h4><div class="opts">${[0.75, 1, 1.25, 1.5, 2].map((r) => b("rate", r, r + "×", V.playbackRate)).join("")}</div></div>
+      <div><h4>LEGENDA</h4><div class="opts"><label style="border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:5px 11px;font-size:12.5px;cursor:pointer"><input type="file" id="psubfile2" accept=".srt,.vtt,text/vtt" class="sr">${cues.length ? "Trocar arquivo" : "Abrir .srt ou .vtt"}</label>${b("sync", -0.5, "−0,5 s", "")}${b("sync", 0.5, "+0,5 s", "")}</div></div>
+      <div><h4>TAMANHO</h4><div class="opts">${[80, 100, 125, 150].map((s) => b("ssize", s, s + "%", subStyle.size)).join("")}</div></div>
+      <div><h4>COR</h4><div class="opts">${[["#ffffff", "Branca"], ["#ffe14d", "Amarela"], ["#7cf0ff", "Ciano"]].map(([c, l]) => b("scolor", c, l, subStyle.color)).join("")}</div></div>
+      <div><h4>FUNDO</h4><div class="opts">${[[0, "Sem fundo"], [0.55, "Sombra"], [0.85, "Sólido"]].map(([v2, l]) => b("sbg", v2, l, subStyle.bg)).join("")}</div></div>
+      <div><h4>POSIÇÃO</h4><div class="opts">${[[4, "Baixa"], [8, "Normal"], [16, "Alta"]].map(([v2, l]) => b("spos", v2, l, subStyle.pos)).join("")}</div></div>`;
+    m.hidden = false;
+  }
+  $("#pmenu").addEventListener("click", (e) => {
+    const t = e.target.closest("button"); if (!t) return;
+    const d = t.dataset;
+    if (d.enh) setEnhance(d.enh);
+    if (d.rate) { V.playbackRate = Number(d.rate); flash(d.rate + "×"); }
+    if (d.sync) { const k = Number(d.sync); cues.forEach((c) => { c.s += k; c.e += k; }); flash("Legenda " + (k > 0 ? "+" : "−") + Math.abs(k).toString().replace(".", ",") + " s"); }
+    if (d.ssize) subStyle.size = Number(d.ssize);
+    if (d.scolor) subStyle.color = d.scolor;
+    if (d.sbg) subStyle.bg = Number(d.sbg);
+    if (d.spos) subStyle.pos = Number(d.spos);
+    store.set("subs", subStyle); styleSubs(); renderCue();
+    $("#pmenu").hidden = true; menu();
+  });
+  function loadSub(file) { if (!file) return; file.text().then((t) => { cues = parseSubs(t); subOn = true; flash(cues.length ? `Legenda carregada (${cues.length} falas)` : "Não encontrei falas neste arquivo"); renderCue(); }); }
+
+  V.addEventListener("timeupdate", update); V.addEventListener("progress", update); V.addEventListener("durationchange", update);
+  V.addEventListener("play", () => { setPlayIcon(); wake(); if (enhance !== "off" && !raf) draw(); });
+  V.addEventListener("pause", () => { setPlayIcon(); P.classList.remove("idle"); persist(); });
+  V.addEventListener("ended", () => { persist(true); if (item) { $("#pnext").hidden = false; } });
+  V.addEventListener("error", () => { if (V.src) { $("#pdrop").hidden = false; $("#pdrophint").textContent = "Este navegador não conseguiu abrir o arquivo. Tente um MP4 com H.264 ou WebM."; } });
+  V.addEventListener("click", toggle);
+  P.addEventListener("mousemove", wake); P.addEventListener("touchstart", wake, { passive: true });
+  $("#pplay").onclick = toggle;
+  $("#pback").onclick = () => { V.currentTime = Math.max(0, V.currentTime - 10); flash("−10 s"); };
+  $("#pfwd").onclick = () => { V.currentTime = Math.min(V.duration || 0, V.currentTime + 10); flash("+10 s"); };
+  $("#pskip").onclick = () => { V.currentTime = Math.min(V.duration || 0, V.currentTime + 85); flash("+85 s"); };
+  $("#pclose").onclick = close;
+  $("#pset").onclick = menu;
+  $("#pcc").onclick = () => { if (!cues.length) { menu(); return; } subOn = !subOn; flash(subOn ? "Legenda ligada" : "Legenda desligada"); renderCue(); };
+  $("#pfs").onclick = () => { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); else if (P.requestFullscreen) P.requestFullscreen().catch(() => flash("Tela cheia indisponível aqui")); else flash("Tela cheia indisponível aqui"); };
+  $("#ppip").onclick = () => { if (!document.pictureInPictureEnabled || !V.requestPictureInPicture) { flash("Imagem no canto indisponível aqui"); return; } (document.pictureInPictureElement ? document.exitPictureInPicture() : V.requestPictureInPicture()).catch(() => flash("Imagem no canto indisponível aqui")); };
+  $("#pvol").oninput = (e) => { V.volume = Number(e.target.value); V.muted = V.volume === 0; };
+  $("#pnext").onclick = () => { ep += 1; $("#pnext").hidden = true; persist(); $("#psub").textContent = `Episódio ${ep} · escolha o arquivo`; $("#pfile").click(); };
+  ["#pfile", "#pfile2"].forEach((s) => $(s).addEventListener("change", (e) => load(e.target.files[0])));
+  P.addEventListener("change", (e) => { if (e.target.id === "psubfile" || e.target.id === "psubfile2") loadSub(e.target.files[0]); });
+  P.addEventListener("dragover", (e) => e.preventDefault());
+  P.addEventListener("drop", (e) => { e.preventDefault(); [...e.dataTransfer.files].forEach((f) => (/\.(srt|vtt)$/i.test(f.name) ? loadSub(f) : load(f))); });
+  const seek = $("#pseek");
+  seek.addEventListener("pointerdown", (e) => { seek.setPointerCapture(e.pointerId); seekTo(e.clientX); const mv = (ev) => seekTo(ev.clientX); seek.addEventListener("pointermove", mv); seek.addEventListener("pointerup", () => seek.removeEventListener("pointermove", mv), { once: true }); });
+  document.addEventListener("keydown", (e) => {
+    if (P.hidden || e.target.closest("input, select")) return;
+    const k = e.key.toLowerCase();
+    if (k === " " || k === "k") { e.preventDefault(); toggle(); }
+    else if (k === "arrowleft") { V.currentTime -= 5; flash("−5 s"); }
+    else if (k === "arrowright") { V.currentTime += 5; flash("+5 s"); }
+    else if (k === "j") $("#pback").click(); else if (k === "l") $("#pfwd").click();
+    else if (k === "f") $("#pfs").click(); else if (k === "c") $("#pcc").click();
+    else if (k === "m") { V.muted = !V.muted; flash(V.muted ? "Sem som" : "Com som"); }
+    else if (k === "escape" && !document.fullscreenElement) close();
+    wake();
+  });
+  const saved = store.get("enh", "off"); if (saved !== "off") enhance = saved;
+  setPlayIcon();
+  return { open: (it, n) => { open(it, n); if (enhance !== "off") setEnhance(enhance); } };
+})();
+
+
+/* ---------------- PLAYER DE EPISÓDIOS GRÁTIS OFICIAIS (YouTube) ---------------- */
+const YTP = (() => {
+  const P = $("#ytp");
+  let it = null, ep = null, kind = null, cur = null, player = null, apiP = null, tick = 0;
+  function api() {
+    if (window.YT && window.YT.Player) return Promise.resolve();
+    if (!apiP) apiP = new Promise((res, rej) => {
+      const prev = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = () => { if (prev) try { prev(); } catch {} res(); };
+      const s = document.createElement("script");
+      s.src = "https://www.youtube.com/iframe_api"; s.async = true; s.onerror = () => { apiP = null; rej(new Error("api")); };
+      document.head.appendChild(s);
+      setTimeout(() => { if (!(window.YT && window.YT.Player)) { apiP = null; rej(new Error("timeout")); } }, 12000);
+    });
+    return apiP;
+  }
+  function src() {
+    const arr = (it.yt || {})[ep] || [];
+    const want = kind || (ME.prefs.audio === "leg" ? "leg" : "dub");
+    const order = [want, want === "dub" ? "leg" : "dub", "ja", "en", "orig"];
+    for (const k of order) { const f = arr.find((v) => v.k === k); if (f) return f; }
+    return arr[0] || null;
+  }
+  function bar() {
+    $("#ytttl").textContent = it.t;
+    const arr = (it.yt || {})[ep] || [];
+    $("#ytsub").textContent = `${cur.x ? "Episódios " + cur.x + " (vídeo único)" : "Episódio " + ep} · ${KLONG[cur.k] || ""} · canal oficial ${cur.ch}${cur.ate ? " · grátis até " + fmtAte(cur.ate) : ""}`;
+    $("#ytaud").innerHTML = arr.length > 1 ? arr.map((v) => `<button data-ytk="${v.k}" aria-pressed="${v.k === cur.k}">${KLABEL[v.k] || v.k}</button>`).join("") : "";
+    const eps = freeEps(it);
+    $("#yteps").innerHTML = eps.length > 1 ? `<span>Episódios grátis</span>${eps.map((n) => `<button data-yte="${n}" aria-pressed="${n === ep}">EP ${n}</button>`).join("")}` : "";
+  }
+  let ccOn = true, ccFor = null;
+  function applyCC() {
+    if (!player || !cur || !AUTOCC(cur.k)) return;
+    try {
+      if (!ccOn) { player.unloadModule && player.unloadModule("captions"); return; }
+      player.loadModule && player.loadModule("captions");
+      const list = (player.getOption && player.getOption("captions", "tracklist")) || [];
+      const pt = list.find((t) => /^pt/.test(t.languageCode));
+      if (pt) { player.setOption("captions", "track", { languageCode: pt.languageCode }); }
+      else {
+        const base = list.find((t) => t.languageCode === "ja") || list.find((t) => /^en/.test(t.languageCode)) || list[0];
+        if (base) player.setOption("captions", "track", { languageCode: base.languageCode, translationLanguage: { languageCode: "pt", languageName: "Português" } });
+        else player.setOption && player.setOption("captions", "track", { languageCode: "pt" });
+      }
+      ccFor = cur.v;
+    } catch { /* legenda indisponível neste vídeo */ }
+  }
+  function ccBtn() {
+    const b = $("#ytcc"); if (!b) return;
+    b.hidden = !(cur && AUTOCC(cur.k));
+    b.setAttribute("aria-pressed", String(ccOn));
+    b.textContent = ccOn ? "Legenda PT ligada" : "Legenda PT desligada";
+  }
+  function msg(html) { const m = $("#ytmsg"); m.innerHTML = html; m.hidden = false; }
+  function fallback(reason) {
+    msg(`<p>${esc(reason)}</p><a class="btn primary" href="https://www.youtube.com/watch?v=${esc(cur.v)}" target="_blank" rel="noopener">${ICON_FREE}Assistir no canal oficial</a>`);
+  }
+  function load() {
+    cur = src(); if (!cur) return;
+    $("#ytmsg").hidden = true;
+    bar(); ccFor = null; ccBtn();
+    ME.prog[it.id] = Object.assign({}, ME.prog[it.id] || {}, { ep, at: now() }); saveMe();
+    if (FRAMED) { fallback("Dentro do Claude não dá para tocar vídeos de outro site. No app Android e no site do Sakuga o episódio toca aqui mesmo."); return; }
+    api().then(() => {
+      if (player && player.loadVideoById) { player.loadVideoById(cur.v); return; }
+      player = new window.YT.Player("ytframe", {
+        videoId: cur.v, host: "https://www.youtube-nocookie.com", width: "100%", height: "100%",
+        playerVars: { autoplay: 1, rel: 0, modestbranding: 1, playsinline: 1, hl: "pt", cc_lang_pref: "pt", cc_load_policy: AUTOCC(cur.k) ? 1 : 0, iv_load_policy: 3, origin: location.origin },
+        events: {
+          onApiChange: () => { if (ccFor !== cur.v) applyCC(); },
+          onStateChange: (e) => { if (e.data === 1 && ccFor !== cur.v) setTimeout(applyCC, 600); if (e.data === 0) next(); },
+          onError: (e) => fallback(e.data === 101 || e.data === 150 || e.data === 153 ? "O canal oficial só libera este episódio no próprio YouTube." : "Este episódio não está mais disponível no canal oficial."),
+        },
+      });
+    }).catch(() => fallback("Não consegui carregar o player agora. Confira sua internet."));
+    clearInterval(tick);
+    tick = setInterval(save, 5000);
+  }
+  function save() {
+    if (!player || !player.getCurrentTime || P.hidden) return;
+    try {
+      const t = player.getCurrentTime(), d = player.getDuration();
+      if (!d) return;
+      ME.prog[it.id] = { ep, t: Math.floor(t), d: Math.floor(d), at: now() };
+      if (t / d > 0.9) { const s = new Set(ME.seen[it.id] || []); s.add(ep); ME.seen[it.id] = [...s]; }
+      saveMe();
+    } catch { /* player ainda carregando */ }
+  }
+  function next() {
+    save();
+    const eps = freeEps(it), i = eps.indexOf(ep);
+    if (i >= 0 && i < eps.length - 1) { ep = eps[i + 1]; kind = null; load(); toast(`Episódio ${ep}`); }
+  }
+  function open(item, n, k) {
+    if (!item || !freeEps(item).length) return;
+    it = item; ep = n || freeNext(item); kind = k || null;
+    if (!ep || !(item.yt || {})[ep]) ep = freeEps(item)[0];
+    P.hidden = false; document.body.style.overflow = "hidden";
+    load();
+  }
+  function close() {
+    save(); clearInterval(tick);
+    try { player && player.stopVideo && player.stopVideo(); } catch {}
+    P.hidden = true; document.body.style.overflow = "";
+    if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    rerender();
+  }
+  P.addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.id === "ytclose") close();
+    else if (b.id === "ytfs") { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); else if (P.requestFullscreen) P.requestFullscreen().catch(() => toast("Tela cheia indisponível aqui")); }
+    else if (b.id === "ytcc") { ccOn = !ccOn; ccFor = null; applyCC(); ccBtn(); toast(ccOn ? "Legenda em português ligada" : "Legenda desligada"); }
+    else if (b.dataset.ytk) { kind = b.dataset.ytk; ME.prefs.audio = kind; saveMe(); load(); }
+    else if (b.dataset.yte) { save(); ep = Number(b.dataset.yte); kind = null; load(); }
+  });
+  document.addEventListener("keydown", (e) => { if (!P.hidden && e.key === "Escape" && !document.fullscreenElement) close(); });
+  return { open, close, state: () => ({ id: it && it.id, ep, v: cur && cur.v, k: cur && cur.k }) };
+})();
+
+applyTheme();
+boot();
+})();
+</script>
